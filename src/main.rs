@@ -181,18 +181,20 @@ fn main() {
     let mut my_tilt = 0;
     let (mut v_x, mut v_y) = (0, 0);
 
+    let mut shots: Vec<Option<(i32, i32, i32, i32, SpCode)>> = Vec::with_capacity(16);
+    let mut unused: Vec<usize> = Vec::with_capacity(16);
+
     bg.0.set_cur_pos(20, 20)
         .put_string("Test for shoot", Some(&CharAttributes::new(2, BgSymmetry::Normal)));
     spr.sp[0].code(6).palette(1).symmetry(SpSymmetry::Normal);
-    spr.sp[1].code(13).palette(1).symmetry(SpSymmetry::Normal);
-    spr.sp[2].code(14).palette(1).symmetry(SpSymmetry::Normal);
-    spr.sp[3].code(15).palette(1).symmetry(SpSymmetry::Normal);
-    spr.sp[4].code(16).palette(1).symmetry(SpSymmetry::Rotate270);
+    bg.0.set_cur_pos(0, 0).put_achar_n(&AChar::new(' ', 1, BgSymmetry::Normal), 80);
 
     'main_loop: loop {
         bg.0.set_cur_pos(25,0)
-            .put_string(&format!("({:4}, {:4})", my_x256 / 256, my_y256 / 256), Some(&CharAttributes::new(1, BgSymmetry::Normal)))
-            .put_achar(&AChar::new('*', if t_count % 4 < 2 { 0 } else { 1 }, BgSymmetry::Normal));
+            .put_string(&format!("({:3}, {:3})", my_x256 / 256, my_y256 / 256), None)
+            .put_achar(&AChar::new('*', if t_count % 4 < 2 { 0 } else { 1 }, BgSymmetry::Normal))
+            .set_cur_pos(4,0)
+            .put_string(&format!("{:3}[{:3}]", shots.len(), unused.len()), None);
         if input_role_state.get(InputRole::Up2).0 {
             if v_y > 0 { v_y = 0 } else {
                 v_y -= 256;
@@ -253,10 +255,52 @@ fn main() {
             _ => 6,
         };
         spr.sp[0].xy(my_x256 / 256, my_y256 / 256).code(my_code).visible(true);
-        spr.sp[1].xy(my_x256 / 256, my_y256 / 256 - 16).visible(true);
-        spr.sp[2].xy(my_x256 / 256 + 16, my_y256 / 256 - 16).visible(true);
-        spr.sp[3].xy(my_x256 / 256, my_y256 / 256 - 32).visible(true);
-        spr.sp[4].xy(my_x256 / 256 + 16, my_y256 / 256 - 32).visible(true);
+
+        {
+            if input_role_state.get(InputRole::Button4).0 {
+                let dx = {
+                //    let t = (t_count % 16) - 8;
+                //    if t < 0 { -t * 128 } else { t * 128 }
+                    (t_count % 8) * 200
+                };
+                let dy = -14 * 256 + 100;
+                let new_shot = Some((my_x256 + 20 * 256, my_y256 + 10 * 256, -dx, dy, 15));
+                if let Some(i) = unused.pop() {
+                    shots[i] = new_shot;
+                } else {
+                    shots.push(new_shot);
+                }
+                let new_shot = Some((my_x256 + 36 * 256, my_y256 + 10 * 256, dx, dy, 15));
+                if let Some(i) = unused.pop() {
+                    shots[i] = new_shot;
+                } else {
+                    shots.push(new_shot);
+                }
+                let new_shot = Some((my_x256 + 28 * 256, my_y256 - 14 * 256, 0, dy, 15));
+                if let Some(i) = unused.pop() {
+                    shots[i] = new_shot;
+                } else {
+                    shots.push(new_shot);
+                }
+            }
+            let mut sp_idx = 16;
+            for i in 0..shots.len() {
+                if let Some((x256, y256, dx, dy, c)) = shots[i] {
+                    spr.sp[sp_idx].xy(x256 / 256, y256 /256).code(c).palette(1).visible(true);
+                    let new_x256 = x256 + dx;
+                    let new_y256 = y256 + dy;
+                    if new_y256 < -32 * 256 {
+                        shots[i] = None;
+                        unused.push(i);
+                    } else {
+                        shots[i] = Some((new_x256, new_y256, dx, dy, c));
+                    }
+                } else {
+                    spr.sp[sp_idx].visible(false);
+                }
+                sp_idx += 1;
+            }
+        }
         if input_role_state.get(InputRole::Button1).1 & 0b1111 == 0b1100 {
             display_info.rotation = display_info.rotation.turn_right();
             display_info.f_count = 0;
