@@ -4,19 +4,24 @@ pub const NUM_BG_PALETTE_COL: usize = 4;
 
 pub static COLOR_TBL: [[Rgba<u8>; NUM_PALETTE_COL]; NUM_PALETTE_TBL] = {
     let mut tbl: [[Rgba<u8>; NUM_PALETTE_COL]; NUM_PALETTE_TBL] = [[Rgba([0, 0, 0, 0]); NUM_PALETTE_COL]; NUM_PALETTE_TBL];
-    let mut idx = 0;
-    while idx < NUM_PALETTE_TBL {
-        let mut pos = 0;
-        while pos < NUM_BG_PALETTE_COL {
-            let bgr_val = BG_PALS[idx][pos];
+    let mut tbl_no = 0;
+    while tbl_no < NUM_PALETTE_TBL {
+        let mut idx = 0;
+        while idx < NUM_BG_PALETTE_COL {
+            let bgr_val = BG_PALS[tbl_no][idx];
             let r = (((bgr_val       ) & 0b11111) << 3) as u8;
             let g = (((bgr_val >>  5 ) & 0b11111) << 3) as u8;
             let b = (((bgr_val >> 10 ) & 0b11111) << 3) as u8;
             let a = if bgr_val == 0 { 0 } else { 255 };
-            tbl[idx][pos] = Rgba([r, g, b, a]);
-            pos += 1;
+            tbl[tbl_no][idx] = Rgba([r, g, b, a]);
+            idx += 1;
         }
-        idx += 1;
+        while idx < NUM_PALETTE_COL {
+            let n = (idx & 0xff) as u8;
+            tbl[tbl_no][idx] = Rgba([n, n, n, 255]);
+            idx += 1;
+        }
+        tbl_no += 1;
     }
     tbl
 };

@@ -1,4 +1,4 @@
-use super::bgsp_common::{SpPos, SpCode, SpPalette, SpSymmetry};
+pub use super::bgsp_common::{SpPos, SpCode, SpPalette, SpSymmetry};
 
 #[derive(Debug, Default, Clone)]
 pub struct ClassicSprite {

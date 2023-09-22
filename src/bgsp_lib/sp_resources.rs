@@ -1,6 +1,5 @@
-use super::bgsp_common::SpSymmetry;
-use super::sp_texture_bank::SpTextureBank;
-use super::classic_sprite::ClassicSprite;
+pub use super::sp_texture_bank::SpTextureBank;
+pub use super::classic_sprite::*;
 
 pub struct SpResources<'a> {
     pub sp: Vec<ClassicSprite>,

@@ -1,7 +1,8 @@
 use std::collections::BTreeMap;
 use std::rc::Rc;
 
-use super::bgsp_common::{PATTERN_SIZE, NUM_PALETTE_COL, Rgba, RgbaImage, SpCode, SpPalette, SpSymmetry, self};
+use super::bgsp_common::{PATTERN_SIZE, NUM_PALETTE_COL, Rgba, RgbaImage, SpCode, SpPalette, SpSymmetry};
+use super::sp_lib;
 
 type SpTexture = RgbaImage;
 type RcSpTexture = Rc<SpTexture>;
@@ -48,7 +49,7 @@ impl<'a> SpTextureBank<'a> {
                 };
                 if size.0 > 0 && size.1 > 0 {
                     let mut buffer = SpTexture::new(size.0 * PATTERN_SIZE as u32 * scale, size.1 * PATTERN_SIZE as u32 * scale);
-                    bgsp_common::draw((pattern_info.0, pattern_info.1), pattern_info.2, &self.palette_tbl[palette_no as usize], symmetry, (0, 0), (scale, scale), &mut buffer);
+                    sp_lib::drawsp((pattern_info.0, pattern_info.1), pattern_info.2, &self.palette_tbl[palette_no as usize], symmetry, (0, 0), (scale, scale), &mut buffer);
                     let rc_texture = Rc::new(buffer);
                     let _ = self.texture_cache.insert((pattern_no, palette_no, symmetry), rc_texture.clone());
                     Some(rc_texture)

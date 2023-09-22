@@ -9,12 +9,8 @@ use shoot_proto::{
     input_role::*,
 
     bgsp_lib::{
-        bgsp_common::*,
-        bg_resources::*,
         bg_plane::*,
-        classic_sprite::*,
         sp_resources::*,
-        sp_texture_bank::*,
     },
 };
 
@@ -187,6 +183,8 @@ fn main() {
     bg.0.set_cur_pos(20, 20)
         .put_string("Test for shoot", Some(&CharAttributes::new(2, BgSymmetry::Normal)));
     spr.sp[0].code(6).palette(1).symmetry(SpSymmetry::Normal);
+    spr.sp[1].code(17).palette(2).symmetry(SpSymmetry::Normal);
+    spr.sp[2].code(17).palette(2).symmetry(SpSymmetry::Normal);
     bg.0.set_cur_pos(0, 0).put_achar_n(&AChar::new(' ', 1, BgSymmetry::Normal), 80);
 
     'main_loop: loop {
@@ -234,27 +232,35 @@ fn main() {
         if my_x256 < -10 * 256 { my_x256 = -10 * 256 }
         if my_x256 > 329 * 256 { my_x256 = 329 * 256 }
         if my_y256 < 100 * 256 { my_y256 = 100 * 256 }
-        if my_y256 > 416 * 256 { my_y256 = 416 * 256 }
+        if my_y256 > 412 * 256 { my_y256 = 412 * 256 }
         if my_tilt != 0 {
             my_tilt += if my_tilt < 0 { 1 } else { -1 }
         }
-        let my_code = match my_tilt {
-            -40..=-29 => 0,
-            -28..=-22 => 1,
-            -21..=-15 => 2,
-            -14..=-8 => 3,
-            -7..=-3 => 4,
-            -2..=-1 => 5,
-            0 => 6,
-            1..=2 => 7,
-            3..=7 => 8,
-            8..=14 => 9,
-            15..=21 => 10,
-            22..=28 => 11,
-            29..=40 => 12,
-            _ => 6,
+        let (my_code, l_offset, r_offset) = match my_tilt {
+            -40..=-29 => ( 0, 23, 36),
+            -28..=-22 => ( 1, 23, 36),
+            -21..=-15 => ( 2, 22, 36),
+            -14..=-8  => ( 3, 22, 37),
+            -7..=-3   => ( 4, 21, 37),
+            -2..=-1   => ( 5, 21, 37),
+            0         => ( 6, 21, 37),
+            1..=2     => ( 7, 21, 37),
+            3..=7     => ( 8, 21, 37),
+            8..=14    => ( 9, 21, 36),
+            15..=21   => (10, 22, 36),
+            22..=28   => (11, 22, 35),
+            29..=40   => (12, 22, 35),
+            _         => ( 6, 21, 37)
         };
         spr.sp[0].xy(my_x256 / 256, my_y256 / 256).code(my_code).visible(true);
+        let back_fire = {
+            let th = if v_y == 0 { 35 } else if v_y < 0 { 10 } else { 50 };
+            let n = 17 + (t_count as u32 % th) / 2;
+            if n > 25 { 17 } else { n }
+        };
+        let y_offset = 65;
+        spr.sp[1].xy(my_x256 / 256 + l_offset, my_y256 / 256 + y_offset).code(back_fire).visible(true);
+        spr.sp[2].xy(my_x256 / 256 + r_offset, my_y256 / 256 + y_offset).code(back_fire).visible(true);
 
         {
             if input_role_state.get(InputRole::Button4).0 {

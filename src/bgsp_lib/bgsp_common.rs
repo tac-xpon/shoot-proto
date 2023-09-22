@@ -4,7 +4,6 @@ use crate::{
 };
 
 pub const PATTERN_SIZE: usize = 8;
-pub const PATTERN_SIZE64: usize = 64;
 pub const NUM_PALETTE_TBL: usize = 64;
 pub const NUM_PALETTE_COL: usize = 256;
 
@@ -127,47 +126,6 @@ impl Symmetry {
     }
 }
 
-pub static XY_MAP64: [[[(u32, u32); PATTERN_SIZE64]; PATTERN_SIZE64]; 8] = {
-    const Q_OFFSET: i32 = PATTERN_SIZE64 as i32 - 1;
-    let mut xy_map: [[[(u32, u32); PATTERN_SIZE64]; PATTERN_SIZE64]; 8] = [[[(0, 0); PATTERN_SIZE64]; PATTERN_SIZE64]; 8];
-    #[allow(clippy::type_complexity)]
-    const VECTORS_AND_OFFSET: [((i32, i32), (i32, i32), (i32, i32)); 8] = [
-        (( 1, 0), ( 0, 1), (       0,        0)), // 0:Normal
-        ((-1, 0), ( 0, 1), (Q_OFFSET,        0)), // 1:FlipH
-        (( 1, 0), ( 0,-1), (       0, Q_OFFSET)), // 2:FlipV
-        ((-1, 0), ( 0,-1), (Q_OFFSET, Q_OFFSET)), // 3:FlipHV(=Rotate180)
-        (( 0, 1), (-1, 0), (Q_OFFSET,        0)), // 4:Rotate90
-        (( 0, 1), ( 1, 0), (       0,        0)), // 5:Rotate90FlipH
-        (( 0,-1), (-1, 0), (Q_OFFSET, Q_OFFSET)), // 6:Rotate90FlipV
-        (( 0,-1), ( 1, 0), (       0, Q_OFFSET)), // 7:Rotate90FlipHV(=Rotate270)
-    ];
-    let mut symmetry = 0;
-    while symmetry < 8 {
-        let unit_i = VECTORS_AND_OFFSET[symmetry].0;
-        let unit_j = VECTORS_AND_OFFSET[symmetry].1;
-        let offset = VECTORS_AND_OFFSET[symmetry].2;
-        let mut y = 0;
-        let mut y_j = (0, 0);
-        while y < PATTERN_SIZE64 {
-            let mut x = 0;
-            let mut x_i = (0, 0);
-            while x < PATTERN_SIZE64 {
-                let mapped_x = x![x_i] + x![y_j] + x![offset];
-                let mapped_y = y![x_i] + y![y_j] + y![offset];
-                xy_map[symmetry][y][x] = (mapped_x as u32, mapped_y as u32);
-                x += 1;
-                x![x_i] += x![unit_i];
-                y![x_i] += y![unit_i];
-            }
-            y += 1;
-            x![y_j] += x![unit_j];
-            y![y_j] += y![unit_j];
-        }
-        symmetry += 1;
-    }
-    xy_map
-};
-
 pub fn draw(
     size: (u32, u32),
     pattern: &[u64],
@@ -214,39 +172,5 @@ pub fn draw(
         }
         x![y_j] += x![unit_j];
         y![y_j] += y![unit_j];
-    }
-}
-
-pub fn draw64x64(
-    pattern: &[u64],
-    color_tbl: &[Rgba<u8>],
-    symmetry: Symmetry,
-    position: (u32, u32),
-    scalar: (u32, u32),
-    gbuf: &mut image::RgbaImage,
-) {
-    if x![scalar] == 0 || y![scalar] == 0 {
-        return;
-    }
-    let mut idx = 0;
-    #[allow(clippy::needless_range_loop)]
-    for py in 0..PATTERN_SIZE64 {
-        let mut px = 0;
-        for _ in 0..(PATTERN_SIZE64 / PATTERN_SIZE) {
-            let row = &pattern[idx];
-            for q in 0..PATTERN_SIZE {
-                let (mapped_px, mapped_py) = XY_MAP64[symmetry as usize][py][px];
-                let (final_px, final_py) = (x![position] + mapped_px * x![scalar], y![position] + mapped_py * y![scalar]);
-                let c = (*row >> ((7 - q) * 8)) & 0xff;
-                let rgba = color_tbl[c as usize];
-                for sy in 0..y![scalar] {
-                    for sx in 0..x![scalar] {
-                        gbuf.put_pixel(final_px + sx, final_py + sy, rgba);
-                    }
-                }
-                px += 1;
-            }
-            idx += 1;
-        }
     }
 }

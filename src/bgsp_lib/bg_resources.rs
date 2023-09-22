@@ -1,4 +1,4 @@
-use super::bgsp_common::{PATTERN_SIZE, NUM_PALETTE_COL, Rgba, RgbaImage, BgCode, BgPalette, BgSymmetry};
+pub use super::bgsp_common::{PATTERN_SIZE, NUM_PALETTE_COL, Rgba, RgbaImage, BgCode, BgPalette, BgSymmetry};
 use super::bg_lib;
 
 const DIRTY_MARK: u32 = 0x1000_0000;

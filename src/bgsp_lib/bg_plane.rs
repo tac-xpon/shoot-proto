@@ -1,5 +1,4 @@
-use super::bgsp_common::{PATTERN_SIZE, NUM_PALETTE_COL, Rgba, RgbaImage, BgCode, BgPalette, BgSymmetry};
-use super::bg_resources::{CharAttributes, AChar, BgResources};
+pub use super::bg_resources::*;
 
 #[inline(always)]
 fn u_mod(x: i32, p: i32) -> i32 {
