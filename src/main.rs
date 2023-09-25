@@ -1,33 +1,29 @@
-use shoot_proto::{
-    bgsp_data::{
-        bgchar_data,
-        bgpal_data,
-        spchar_data,
-        sppal_data,
-    },
-    direction::*,
-    input_role::*,
-
-    bgsp_lib::{
-        bg_plane::*,
-        sp_resources::*,
-    },
-};
-
 use piston_window::*;
 use sdl2_window::Sdl2Window;
 use std::collections::BTreeMap;
 // use once_cell::sync::OnceCell;
 
-type GameWindow = piston_window::PistonWindow<sdl2_window::Sdl2Window>;
+use bgsp_lib2::bgsp_common::*;
+use bgsp_lib2::bg_plane::*;
+use bgsp_lib2::sp_resources::*;
 
-struct DisplayInfo {
-    full_screen: bool,
-    vm_rect_size: (i32, i32),
-    rotation: Direction,
-    pixel_scale: i32,
-    margin: i32,
-    f_count: i32,
+mod bgsp_data;
+use bgsp_data::*;
+mod direction;
+use direction::*;
+mod input_role;
+use input_role::*;
+mod wait_and_update;
+
+pub type GameWindow = piston_window::PistonWindow<sdl2_window::Sdl2Window>;
+
+pub struct DisplayInfo {
+    pub full_screen: bool,
+    pub vm_rect_size: (i32, i32),
+    pub rotation: direction::Direction,
+    pub pixel_scale: i32,
+    pub margin: i32,
+    pub f_count: i32,
 }
 
 const FULL_SCREEN: bool = false;
@@ -107,6 +103,9 @@ fn main() {
             (piston_window::Key::D3, InputRole::Button2),
             (piston_window::Key::D4, InputRole::Button3),
             (piston_window::Key::Z, InputRole::Button4),
+            (piston_window::Key::X, InputRole::Button5),
+            (piston_window::Key::C, InputRole::Button6),
+            (piston_window::Key::Space, InputRole::Button7),
             (piston_window::Key::W, InputRole::Up),
             (piston_window::Key::D, InputRole::Right),
             (piston_window::Key::S, InputRole::Down),
@@ -117,7 +116,6 @@ fn main() {
             (piston_window::Key::Right, InputRole::Right2),
             (piston_window::Key::Down, InputRole::Down2),
             (piston_window::Key::Left, InputRole::Left2),
-            (piston_window::Key::Space, InputRole::Button7),
         ];
         for key_set in key_set_list {
             if let Some(role_list) = keyboard_map.get_mut(&key_set.0) {
@@ -177,7 +175,7 @@ fn main() {
     let mut my_tilt = 0;
     let (mut v_x, mut v_y) = (0, 0);
 
-    let mut shots: Vec<Option<(i32, i32, i32, i32, SpCode)>> = Vec::with_capacity(16);
+    let mut shots: Vec<Option<((i32, i32), (i32, i32), SpCode)>> = Vec::with_capacity(16);
     let mut unused: Vec<usize> = Vec::with_capacity(16);
 
     bg.0.set_cur_pos(20, 20)
@@ -187,6 +185,7 @@ fn main() {
     spr.sp[2].code(17).palette(2).symmetry(SpSymmetry::Normal);
     bg.0.set_cur_pos(0, 0).put_achar_n(&AChar::new(' ', 1, BgSymmetry::Normal), 80);
 
+    input_role_state.clear_all();
     'main_loop: loop {
         bg.0.set_cur_pos(25,0)
             .put_string(&format!("({:3}, {:3})", my_x256 / 256, my_y256 / 256), None)
@@ -236,53 +235,55 @@ fn main() {
         if my_tilt != 0 {
             my_tilt += if my_tilt < 0 { 1 } else { -1 }
         }
-        let (my_code, l_offset, r_offset) = match my_tilt {
-            -40..=-29 => ( 0, 23, 36),
-            -28..=-22 => ( 1, 23, 36),
-            -21..=-15 => ( 2, 22, 36),
-            -14..=-8  => ( 3, 22, 37),
-            -7..=-3   => ( 4, 21, 37),
-            -2..=-1   => ( 5, 21, 37),
-            0         => ( 6, 21, 37),
-            1..=2     => ( 7, 21, 37),
-            3..=7     => ( 8, 21, 37),
-            8..=14    => ( 9, 21, 36),
-            15..=21   => (10, 22, 36),
-            22..=28   => (11, 22, 35),
-            29..=40   => (12, 22, 35),
-            _         => ( 6, 21, 37)
-        };
-        spr.sp[0].xy(my_x256 / 256, my_y256 / 256).code(my_code).visible(true);
-        let back_fire = {
-            let th = if v_y == 0 { 35 } else if v_y < 0 { 10 } else { 50 };
-            let n = 17 + (t_count as u32 % th) / 2;
-            if n > 25 { 17 } else { n }
-        };
-        let y_offset = 65;
-        spr.sp[1].xy(my_x256 / 256 + l_offset, my_y256 / 256 + y_offset).code(back_fire).visible(true);
-        spr.sp[2].xy(my_x256 / 256 + r_offset, my_y256 / 256 + y_offset).code(back_fire).visible(true);
-
+        {
+            let (my_code, l_offset, r_offset) = match my_tilt {
+                -40..=-29 => ( 0, 23, 36),
+                -28..=-22 => ( 1, 23, 36),
+                -21..=-15 => ( 2, 22, 36),
+                -14..=-8  => ( 3, 22, 37),
+                -7..=-3   => ( 4, 21, 37),
+                -2..=-1   => ( 5, 21, 37),
+                0         => ( 6, 21, 37),
+                1..=2     => ( 7, 21, 37),
+                3..=7     => ( 8, 21, 37),
+                8..=14    => ( 9, 21, 36),
+                15..=21   => (10, 22, 36),
+                22..=28   => (11, 22, 35),
+                29..=40   => (12, 22, 35),
+                _         => ( 6, 21, 37)
+            };
+            let my_pos = SpPos::new(my_x256 / 256, my_y256 / 256);
+            spr.sp(0).pos(my_pos).code(my_code).visible(true);
+            let back_fire = {
+                let th = if v_y == 0 { 25 } else if v_y < 0 { 15 } else { 45 };
+                let n = 17 + (t_count as u32 % th) / 2;
+                if n > 25 { 17 } else { n }
+            };
+            let y_offset = 65;
+            let vis = t_count % 2 == 0;
+            spr.sp(1).xy(my_pos.x + l_offset, my_pos.y + y_offset).code(back_fire).visible(vis);
+            spr.sp(2).xy(my_pos.x + r_offset, my_pos.y + y_offset).code(back_fire).visible(vis);
+        }
         {
             if input_role_state.get(InputRole::Button4).0 {
-                let dx = {
+                let (dx, dy) = {
                 //    let t = (t_count % 16) - 8;
                 //    if t < 0 { -t * 128 } else { t * 128 }
-                    (t_count % 8) * 200
+                    ((t_count % 8) * 200 ,-14 * 256 + 100)
                 };
-                let dy = -14 * 256 + 100;
-                let new_shot = Some((my_x256 + 20 * 256, my_y256 + 10 * 256, -dx, dy, 15));
+                let new_shot = Some(((my_x256 + 21 * 256, my_y256 + 10 * 256), (-dx, dy), 15));
                 if let Some(i) = unused.pop() {
                     shots[i] = new_shot;
                 } else {
                     shots.push(new_shot);
                 }
-                let new_shot = Some((my_x256 + 36 * 256, my_y256 + 10 * 256, dx, dy, 15));
+                let new_shot = Some(((my_x256 + 35 * 256, my_y256 + 10 * 256), (dx, dy), 15));
                 if let Some(i) = unused.pop() {
                     shots[i] = new_shot;
                 } else {
                     shots.push(new_shot);
                 }
-                let new_shot = Some((my_x256 + 28 * 256, my_y256 - 14 * 256, 0, dy, 15));
+                let new_shot = Some(((my_x256 + 28 * 256, my_y256 - 14 * 256), (0, dy), 15));
                 if let Some(i) = unused.pop() {
                     shots[i] = new_shot;
                 } else {
@@ -291,18 +292,18 @@ fn main() {
             }
             let mut sp_idx = 16;
             for i in 0..shots.len() {
-                if let Some((x256, y256, dx, dy, c)) = shots[i] {
-                    spr.sp[sp_idx].xy(x256 / 256, y256 /256).code(c).palette(1).visible(true);
+                if let Some(((x256, y256), (dx, dy), c)) = shots[i] {
+                    spr.sp(sp_idx).xy(x256 / 256, y256 /256).code(c).palette(1).visible(true);
                     let new_x256 = x256 + dx;
                     let new_y256 = y256 + dy;
                     if new_y256 < -32 * 256 {
                         shots[i] = None;
                         unused.push(i);
                     } else {
-                        shots[i] = Some((new_x256, new_y256, dx, dy, c));
+                        shots[i] = Some(((new_x256, new_y256), (dx, dy), c));
                     }
                 } else {
-                    spr.sp[sp_idx].visible(false);
+                    spr.sp(sp_idx).visible(false);
                 }
                 sp_idx += 1;
             }
@@ -311,134 +312,11 @@ fn main() {
             display_info.rotation = display_info.rotation.turn_right();
             display_info.f_count = 0;
         }
-        if wait_and_rendering(&mut window, &mut spr, &mut bg, &mut display_info, &keyboard_map, &mut input_role_state) {
+        if wait_and_update::doing(&mut window, &mut spr, &mut bg, &mut display_info, &keyboard_map, &mut input_role_state) {
             break 'main_loop;
         }
         t_count += 1;
     }
 
 sdl_context.mouse().show_cursor(true);
-}
-
-fn wait_and_rendering(
-    window: &mut GameWindow,
-    spr: &mut SpResources,
-    bg: &mut (BgPlane, BgPlane),
-    info: &mut DisplayInfo,
-    keyboard_map: &BTreeMap<piston_window::Key, Vec<InputRole>>,
-    input_role_state: &mut InputRoleState,
-) -> bool {
-    let mut texture_context = window.create_texture_context();
-    let texture_settings = TextureSettings::new();
-    let _ = bg.0.rendering();
-    let bg0_whole = Texture::from_image(
-        &mut texture_context,
-        bg.0.whole_image(),
-        &texture_settings,
-    ).unwrap();
-    let _ = bg.1.rendering();
-    let bg1_whole = Texture::from_image(
-        &mut texture_context,
-        bg.1.whole_image(),
-        &texture_settings,
-    ).unwrap();
-    // Sprites
-    let sp_drawn = Texture::from_image(
-        &mut texture_context,
-        &spr.rendering(info.vm_rect_size.0 as i32, info.vm_rect_size.1 as i32),
-        &texture_settings,
-    ).unwrap();
-
-    while let Some(event) = window.next() {
-        if let Some(Button::Keyboard(k)) = event.press_args() {
-            if let Some(role_list) = keyboard_map.get(&k) {
-                for role in role_list { input_role_state.set_true(*role) }
-            }
-        }
-        if let Some(Button::Keyboard(k)) = event.release_args() {
-            if let Some(role_list) = keyboard_map.get(&k) {
-                for role in role_list { input_role_state.set_false(*role) }
-            }
-        }
-        if let Event::Loop(Loop::Render(_)) = event {
-            input_role_state.update_history();
-            let window_size = window.size();
-            window.draw_2d(&event, |context, graphics, _device| {
-                let (vm_rect_width, vm_rect_height, pixel_scale, margin_2x) = (
-                    info.vm_rect_size.0,
-                    info.vm_rect_size.1,
-                    info.pixel_scale,
-                    info.margin * 2,
-                );
-                let (zoom, h_offset, v_offset) = {
-                    let view_rect = {
-                        let (width, height) = (vm_rect_width * pixel_scale, vm_rect_height * pixel_scale);
-                        match info.rotation {
-                            Direction::Up    | Direction::Down => (width, height),
-                            Direction::Right | Direction::Left => (height, width),
-                        }
-                    };
-                    let h_zoom = window_size.width / ((view_rect.0 + margin_2x) as f64);
-                    let v_zoom = window_size.height / ((view_rect.1  + margin_2x) as f64);
-                    let zoom = h_zoom.min(v_zoom);
-                    let h_offset =  (window_size.width - (view_rect.0 as f64) * zoom) / 2.0;
-                    let v_offset =  (window_size.height - (view_rect.1 as f64) * zoom) / 2.0;
-                    (zoom, h_offset, v_offset)
-                };
-                let base_transform = context.transform.zoom(zoom).trans(h_offset / zoom, v_offset / zoom);
-                let transform = match info.rotation {
-                    Direction::Up    => base_transform.rot_deg(  0.0).trans(0.0, 0.0),
-                    Direction::Right => base_transform.rot_deg( 90.0).trans(0.0, -((vm_rect_height * pixel_scale) as f64)),
-                    Direction::Down  => base_transform.rot_deg(180.0).trans(-((vm_rect_width * pixel_scale) as f64), -((vm_rect_height * pixel_scale) as f64)),
-                    Direction::Left  => base_transform.rot_deg(270.0).trans(-((vm_rect_width * pixel_scale) as f64), 0.0),
-                };
-                let draw_inside = draw_state::DrawState::new_inside();
-                if info.f_count < 4 {
-                    // Initialize
-                    graphics.clear_color([0.0, 0.0, 0.0, 1.0]);
-                    graphics.clear_stencil(0);
-                    rectangle::Rectangle::new([1.0; 4]).draw(
-                        [0.0, 0.0, (vm_rect_width * pixel_scale) as f64, (vm_rect_height * pixel_scale) as f64],
-                        &draw_state::DrawState::new_clip(),
-                        transform,
-                        graphics,
-                    );
-                } else {
-                    // Clear
-                    rectangle::Rectangle::new([0.0, 0.0, 0.0, 1.0]).draw(
-                        [0.0, 0.0, (vm_rect_width * pixel_scale) as f64, (vm_rect_height * pixel_scale) as f64],
-                        &draw_inside,
-                        transform,
-                        graphics,
-                    );
-                }
-                // BG1
-                image::draw_many(
-                    bg.1.draw_rects(), [1.0, 1.0, 1.0, 1.0],
-                    &bg1_whole,
-                    &draw_inside,
-                    transform,
-                    graphics,
-                );
-                // Sprites
-                image::Image::new().draw(
-                    &sp_drawn,
-                    &draw_inside,
-                    transform,
-                    graphics,
-                );
-                // BG0
-                image::draw_many(
-                    bg.0.draw_rects(), [1.0, 1.0, 1.0, 1.0],
-                    &bg0_whole,
-                    &draw_inside,
-                    transform,
-                    graphics,
-                );
-            });
-            info.f_count += 1;
-            return false;
-        }
-    }
-    true
 }

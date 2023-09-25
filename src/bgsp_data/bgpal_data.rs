@@ -1,4 +1,4 @@
-use crate::bgsp_lib::bgsp_common::{Rgba, NUM_PALETTE_TBL, NUM_PALETTE_COL};
+use bgsp_lib2::bgsp_common::{Rgba, NUM_PALETTE_TBL, NUM_PALETTE_COL};
 
 pub const NUM_BG_PALETTE_COL: usize = 4;
 

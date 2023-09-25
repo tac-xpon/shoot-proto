@@ -1,4 +1,4 @@
-use crate::bgsp_lib::bgsp_common::PATTERN_SIZE;
+use bgsp_lib2::bgsp_common::PATTERN_SIZE;
 
 pub static SP_PATTERN_TBL: [Option<(u32, u32, &[u64])>; 64] = {
     let mut tbl: [Option<(u32, u32, &[u64])>; 64] = [None; 64];

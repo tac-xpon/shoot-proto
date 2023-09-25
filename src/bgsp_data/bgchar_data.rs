@@ -1,4 +1,4 @@
-use crate::bgsp_lib::bgsp_common::PATTERN_SIZE;
+use bgsp_lib2::bgsp_common::PATTERN_SIZE;
 
 pub const BG_CHARS: [[u64; PATTERN_SIZE]; 128] = [
     // 0x00 ~ 0x0f(0 ~ 15)

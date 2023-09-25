@@ -1,4 +1,4 @@
-use crate::bgsp_lib::bgsp_common::{Rgba, NUM_PALETTE_TBL, NUM_PALETTE_COL};
+use bgsp_lib2::bgsp_common::{Rgba, NUM_PALETTE_TBL, NUM_PALETTE_COL};
 
 pub static COLOR_TBL: [[Rgba<u8>; NUM_PALETTE_COL]; NUM_PALETTE_TBL] = {
     let mut tbl: [[Rgba<u8>; NUM_PALETTE_COL]; NUM_PALETTE_TBL] = [[Rgba([0, 0, 0, 0]); NUM_PALETTE_COL]; NUM_PALETTE_TBL];
