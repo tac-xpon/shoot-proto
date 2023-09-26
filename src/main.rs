@@ -1,11 +1,18 @@
-use piston_window::*;
+use piston_window::{
+    PistonWindow,
+    WindowSettings,
+    OpenGL,
+    EventLoop,
+};
 use sdl2_window::Sdl2Window;
 use std::collections::BTreeMap;
 // use once_cell::sync::OnceCell;
 
-use bgsp_lib2::bgsp_common::*;
-use bgsp_lib2::bg_plane::*;
-use bgsp_lib2::sp_resources::*;
+use bgsp_lib2::{
+    bgsp_common::*,
+    bg_plane::*,
+    sp_resources::*,
+};
 
 mod bgsp_data;
 use bgsp_data::*;
@@ -15,12 +22,12 @@ mod input_role;
 use input_role::*;
 mod wait_and_update;
 
-pub type GameWindow = piston_window::PistonWindow<sdl2_window::Sdl2Window>;
+pub type GameWindow = PistonWindow<Sdl2Window>;
 
 pub struct DisplayInfo {
     pub full_screen: bool,
     pub vm_rect_size: (i32, i32),
-    pub rotation: direction::Direction,
+    pub rotation: Direction,
     pub pixel_scale: i32,
     pub margin: i32,
     pub f_count: i32,
@@ -181,8 +188,8 @@ fn main() {
     bg.0.set_cur_pos(20, 20)
         .put_string("Test for shoot", Some(&CharAttributes::new(2, BgSymmetry::Normal)));
     spr.sp[0].code(6).palette(1).symmetry(SpSymmetry::Normal);
-    spr.sp[1].code(17).palette(2).symmetry(SpSymmetry::Normal);
-    spr.sp[2].code(17).palette(2).symmetry(SpSymmetry::Normal);
+    spr.sp[1].code(17).palette(3).symmetry(SpSymmetry::Normal);
+    spr.sp[2].code(17).palette(3).symmetry(SpSymmetry::Normal);
     bg.0.set_cur_pos(0, 0).put_achar_n(&AChar::new(' ', 1, BgSymmetry::Normal), 80);
 
     input_role_state.clear_all();
@@ -236,23 +243,23 @@ fn main() {
             my_tilt += if my_tilt < 0 { 1 } else { -1 }
         }
         {
-            let (my_code, l_offset, r_offset) = match my_tilt {
-                -40..=-29 => ( 0, 23, 36),
-                -28..=-22 => ( 1, 23, 36),
-                -21..=-15 => ( 2, 22, 36),
-                -14..=-8  => ( 3, 22, 37),
-                -7..=-3   => ( 4, 21, 37),
-                -2..=-1   => ( 5, 21, 37),
-                0         => ( 6, 21, 37),
-                1..=2     => ( 7, 21, 37),
-                3..=7     => ( 8, 21, 37),
-                8..=14    => ( 9, 21, 36),
-                15..=21   => (10, 22, 36),
-                22..=28   => (11, 22, 35),
-                29..=40   => (12, 22, 35),
-                _         => ( 6, 21, 37)
+            let (my_code, drift, l_offset, r_offset) = match my_tilt {
+                -40..=-29 => ( 0, -2, 23, 36),
+                -28..=-22 => ( 1, -2, 23, 36),
+                -21..=-15 => ( 2, -1, 22, 36),
+                -14..=-8  => ( 3, -1, 22, 37),
+                -7..=-3   => ( 4,  0, 21, 37),
+                -2..=-1   => ( 5,  0, 21, 37),
+                0         => ( 6,  0, 21, 37),
+                1..=2     => ( 7,  0, 21, 37),
+                3..=7     => ( 8,  0, 21, 37),
+                8..=14    => ( 9,  1, 21, 36),
+                15..=21   => (10,  1, 22, 36),
+                22..=28   => (11,  2, 22, 35),
+                29..=40   => (12,  2, 22, 35),
+                _         => ( 6,  0, 21, 37)
             };
-            let my_pos = SpPos::new(my_x256 / 256, my_y256 / 256);
+            let my_pos = SpPos::new(my_x256 / 256 + drift, my_y256 / 256);
             spr.sp(0).pos(my_pos).code(my_code).visible(true);
             let back_fire = {
                 let th = if v_y == 0 { 25 } else if v_y < 0 { 15 } else { 45 };
@@ -269,7 +276,7 @@ fn main() {
                 let (dx, dy) = {
                 //    let t = (t_count % 16) - 8;
                 //    if t < 0 { -t * 128 } else { t * 128 }
-                    ((t_count % 8) * 200 ,-14 * 256 + 100)
+                    ((t_count % 8) * 200 ,-14 * 256 + 96)
                 };
                 let new_shot = Some(((my_x256 + 21 * 256, my_y256 + 10 * 256), (-dx, dy), 15));
                 if let Some(i) = unused.pop() {
@@ -317,6 +324,5 @@ fn main() {
         }
         t_count += 1;
     }
-
-sdl_context.mouse().show_cursor(true);
+    sdl_context.mouse().show_cursor(true);
 }

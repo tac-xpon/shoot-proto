@@ -3,17 +3,12 @@ use bgsp_lib2::bgsp_common::{Rgba, NUM_PALETTE_TBL, NUM_PALETTE_COL};
 pub static COLOR_TBL: [[Rgba<u8>; NUM_PALETTE_COL]; NUM_PALETTE_TBL] = {
     let mut tbl: [[Rgba<u8>; NUM_PALETTE_COL]; NUM_PALETTE_TBL] = [[Rgba([0, 0, 0, 0]); NUM_PALETTE_COL]; NUM_PALETTE_TBL];
     let mut tbl_no = 0;
-    while tbl_no < NUM_SP_PALETTE_TBL {
-        let pal_data = SP_PALS[tbl_no];
+    while tbl_no < PALS.len() {
+        let pal_data = PALS[tbl_no];
         let mut idx = 0;
         while idx < pal_data.len() {
             let (r, g, b, a) = pal_data[idx];
-            tbl[tbl_no + 1][idx] = Rgba([r, g, b, a]);
-            idx += 1;
-        }
-        while idx < NUM_PALETTE_COL {
-            let n = (idx & 0xff) as u8;
-            tbl[tbl_no + 1][idx] = Rgba([n, n, n, 255]);
+            tbl[tbl_no][idx] = Rgba([r, g, b, a]);
             idx += 1;
         }
         tbl_no += 1;
@@ -21,14 +16,15 @@ pub static COLOR_TBL: [[Rgba<u8>; NUM_PALETTE_COL]; NUM_PALETTE_TBL] = {
     tbl
 };
 
-pub const NUM_SP_PALETTE_TBL: usize = 2;
-
-const SP_PALS: [&[(u8, u8, u8, u8)]; NUM_SP_PALETTE_TBL] = [
-    &SP_PAL_A,
-    &SP_PAL_B,
+const NUM_SP_PALETTE_TBL: usize = 4;
+const PALS: [&[(u8, u8, u8, u8)]; NUM_SP_PALETTE_TBL] = [
+    &[],
+    &SP_PAL_1,
+    &SP_PAL_2,
+    &SP_PAL_3,
 ];
 
-const SP_PAL_A: [(u8, u8, u8, u8); 128] = [
+const SP_PAL_1: [(u8, u8, u8, u8); 128] = [
     (  0,   0,   0,   0),
     ( 60,  74, 176, 128),
     (152,   6,   6, 128),
@@ -159,10 +155,18 @@ const SP_PAL_A: [(u8, u8, u8, u8); 128] = [
     (107,  32, 108, 255),
 ];
 
-const SP_PAL_B: [(u8, u8, u8, u8); 5] = [
+const SP_PAL_2: [(u8, u8, u8, u8); 5] = [
     (  0,   0,   0,   0),
     (217,  87,  99, 140),
     (217, 160, 102, 255),
     (238, 195, 154, 255),
+    (255, 255, 255, 255),
+];
+
+const SP_PAL_3: [(u8, u8, u8, u8); 5] = [
+    (  0,   0,   0,   0),
+    ( 99,  87, 217, 140),
+    (102, 160, 217, 255),
+    (154, 195, 238, 255),
     (255, 255, 255, 255),
 ];

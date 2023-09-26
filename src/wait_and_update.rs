@@ -7,7 +7,10 @@ use crate::{
 };
 use std::collections::BTreeMap;
 use piston_window::*;
-use bgsp_lib2::{bg_plane::*, sp_resources::*};
+use bgsp_lib2::{
+    bg_plane::*,
+    sp_resources::*
+};
 
 pub fn doing(
     window: &mut GameWindow,
