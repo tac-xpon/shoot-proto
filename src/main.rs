@@ -3,6 +3,7 @@ use piston_window::{
     WindowSettings,
     OpenGL,
     EventLoop,
+    Key,
 };
 use sdl2_window::Sdl2Window;
 use std::collections::BTreeMap;
@@ -104,25 +105,26 @@ fn main() {
 
     let mut keyboard_map: BTreeMap<piston_window::Key, Vec<_>> = BTreeMap::new();
     {
-        let key_set_list = vec![
-            (piston_window::Key::D1, InputRole::Button0),
-            (piston_window::Key::D2, InputRole::Button1),
-            (piston_window::Key::D3, InputRole::Button2),
-            (piston_window::Key::D4, InputRole::Button3),
-            (piston_window::Key::Z, InputRole::Button4),
-            (piston_window::Key::X, InputRole::Button5),
-            (piston_window::Key::C, InputRole::Button6),
-            (piston_window::Key::Space, InputRole::Button7),
-            (piston_window::Key::W, InputRole::Up),
-            (piston_window::Key::D, InputRole::Right),
-            (piston_window::Key::S, InputRole::Down),
-            (piston_window::Key::A, InputRole::Left),
-            (piston_window::Key::E, InputRole::Up),
-            (piston_window::Key::E, InputRole::Right),
-            (piston_window::Key::Up, InputRole::Up2),
-            (piston_window::Key::Right, InputRole::Right2),
-            (piston_window::Key::Down, InputRole::Down2),
-            (piston_window::Key::Left, InputRole::Left2),
+        let key_set_list = [
+            (Key::D1,    InputRole::Button0),
+            (Key::D2,    InputRole::Button1),
+            (Key::D3,    InputRole::Button2),
+            (Key::D4,    InputRole::Button3),
+            (Key::Z,     InputRole::Button4),
+            (Key::X,     InputRole::Button5),
+            (Key::C,     InputRole::Button6),
+            (Key::Space, InputRole::Button7),
+            (Key::Space, InputRole::Button4),
+            (Key::W,     InputRole::Up),
+            (Key::D,     InputRole::Right),
+            (Key::S,     InputRole::Down),
+            (Key::A,     InputRole::Left),
+            (Key::E,     InputRole::Up),
+            (Key::E,     InputRole::Right),
+            (Key::Up,    InputRole::Up2),
+            (Key::Right, InputRole::Right2),
+            (Key::Down,  InputRole::Down2),
+            (Key::Left,  InputRole::Left2),
         ];
         for key_set in key_set_list {
             if let Some(role_list) = keyboard_map.get_mut(&key_set.0) {
