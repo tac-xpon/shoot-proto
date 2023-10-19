@@ -41,7 +41,7 @@ const PIXEL_SCALE: i32 = 2;
 const WINDOW_MARGIN: i32 = 2;
 const BG0_RECT_SIZE: (i32, i32) = (80, 80);
 const BG1_RECT_SIZE: (i32, i32) = (160, 160);
-const MAX_SPRITES: u32 = 512;
+const MAX_SPRITES: usize = 512;
 // const AUDIO_VOLUME: u16 = 5;
 
 fn main() {
@@ -137,43 +137,30 @@ fn main() {
     let mut input_role_state = InputRoleState::default();
 
     let mut bg = {
-        let mut bg0 = BgPlane::new(
+        let bg0 = BgPlane::new(
             BG0_RECT_SIZE,
             VM_RECT_SIZE,
-            &bgchar_data::BG_CHARS,
+            &bgchar_data::BG_PATTERN_TBL,
             &bgpal_data::COLOR_TBL,
             display_info.pixel_scale,
         );
-        bg0.set_base_symmetry(BgSymmetry::Normal);
 
-        let mut bg1 = BgPlane::new(
+        let bg1 = BgPlane::new(
             BG1_RECT_SIZE,
             VM_RECT_SIZE,
-            &bgchar_data::BG_CHARS,
+            &bgchar_data::BG_PATTERN_TBL,
             &bgpal_data::COLOR_TBL,
             display_info.pixel_scale,
         );
-        bg1.set_base_symmetry(BgSymmetry::Normal);
         (bg0, bg1)
     };
 
-    let mut spr = {
-        let mut sp: Vec<ClassicSprite> = Vec::with_capacity(MAX_SPRITES as usize);
-        for _ in 0..MAX_SPRITES {
-            sp.push(ClassicSprite { ..Default::default()});
-        }
-        let texture_bank = SpTextureBank::new(
-            &spchar_data::SP_PATTERN_TBL,
-            &sppal_data::COLOR_TBL,
-            display_info.pixel_scale,
-        );
-        SpResources {
-            sp,
-            texture_bank,
-            default_symmetry: SpSymmetry::Normal,
-            pixel_scale: display_info.pixel_scale,
-        }
-    };
+    let mut spr = SpResources::new(
+        MAX_SPRITES,
+        &spchar_data::SP_PATTERN_TBL,
+        &sppal_data::COLOR_TBL,
+        display_info.pixel_scale,
+    );
 
     if display_info.full_screen { sdl_context.mouse().show_cursor(false) }
 
@@ -246,8 +233,8 @@ fn main() {
         }
         {
             let (my_code, drift, l_offset, r_offset) = match my_tilt {
-                -40..=-29 => ( 0, -2, 23, 36),
-                -28..=-22 => ( 1, -2, 23, 36),
+                -40..=-29 => ( 0, -1, 23, 36),
+                -28..=-22 => ( 1, -1, 23, 36),
                 -21..=-15 => ( 2, -1, 22, 36),
                 -14..=-8  => ( 3, -1, 22, 37),
                 -7..=-3   => ( 4,  0, 21, 37),
@@ -257,8 +244,8 @@ fn main() {
                 3..=7     => ( 8,  0, 21, 37),
                 8..=14    => ( 9,  1, 21, 36),
                 15..=21   => (10,  1, 22, 36),
-                22..=28   => (11,  2, 22, 35),
-                29..=40   => (12,  2, 22, 35),
+                22..=28   => (11,  1, 22, 35),
+                29..=40   => (12,  1, 22, 35),
                 _         => ( 6,  0, 21, 37)
             };
             let my_pos = SpPos::new(my_x256 / 256 + drift, my_y256 / 256);
@@ -305,7 +292,7 @@ fn main() {
                     spr.sp(sp_idx).xy(x256 / 256, y256 /256).code(c).palette(1).visible(true);
                     let new_x256 = x256 + dx;
                     let new_y256 = y256 + dy;
-                    if new_y256 < -32 * 256 {
+                    if new_y256 < -32 * 256 || new_x256 < -16 * 256 || new_x256 > 388 * 256 {
                         shots[i] = None;
                         unused.push(i);
                     } else {

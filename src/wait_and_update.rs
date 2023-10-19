@@ -1,4 +1,3 @@
-
 use crate::{
     direction::*,
     input_role::*,

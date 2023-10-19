@@ -1,28 +1,28 @@
 use bgsp_lib2::bgsp_common::PATTERN_SIZE;
 
-pub static SP_PATTERN_TBL: [Option<(u32, u32, &[u64])>; 64] = {
+pub const SP_PATTERN_TBL: [Option<(u32, u32, &[u64])>; 64] = {
     let mut tbl: [Option<(u32, u32, &[u64])>; 64] = [None; 64];
     let mut tbl_pos = 0;
     let mut idx = 0;
-    while idx < 13 {
+    while idx < SP_CHARS_8X8.len() {
         tbl[tbl_pos] = Some((8, 8, &SP_CHARS_8X8[idx]));
         tbl_pos += 1;
         idx += 1;
     }
     idx = 0;
-    while idx < 2 {
+    while idx < SP_CHARS_2X2.len() {
         tbl[tbl_pos] = Some((2, 2, &SP_CHARS_2X2[idx]));
         tbl_pos += 1;
         idx += 1;
     }
     idx = 0;
-    while idx < 2 {
+    while idx < SP_CHARS_1X2.len() {
         tbl[tbl_pos] = Some((1, 2, &SP_CHARS_1X2[idx]));
         tbl_pos += 1;
         idx += 1;
     }
     idx = 0;
-    while idx < 9 {
+    while idx < SP_CHARS_1X4.len() {
         tbl[tbl_pos] = Some((1, 4, &SP_CHARS_1X4[idx]));
         tbl_pos += 1;
         idx += 1;
@@ -30,23 +30,23 @@ pub static SP_PATTERN_TBL: [Option<(u32, u32, &[u64])>; 64] = {
     tbl
 };
 
-const SP_CHARS_1X2: [[u64; PATTERN_SIZE * 1 * 2]; 2] = [
+const SP_CHARS_1X2: &[[u64; PATTERN_SIZE * 1 * 2]] = &[
     [
         0x0000000000000000,
-        0x0000004f4f000000,
-        0x00004f51514f0000,
-        0x00004f51514f0000,
-        0x00004f51514f0000,
-        0x00004f51514f0000,
-        0x00004f51514f0000,
-        0x00004f51514f0000,
-        0x00004f51514f0000,
-        0x0000004f4f000000,
-        0x0000004f4f000000,
-        0x0000004f4f000000,
-        0x0000000000000000,
-        0x0000004f4f000000,
         0x0000005151000000,
+        0x0000514f4f510000,
+        0x0000514f4f510000,
+        0x0000514f4f510000,
+        0x0000514f4f510000,
+        0x0000514f4f510000,
+        0x0000514f4f510000,
+        0x0000514f4f510000,
+        0x0000005151000000,
+        0x0000005151000000,
+        0x0000005151000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
         0x0000000000000000,
     ],
     [
@@ -69,7 +69,7 @@ const SP_CHARS_1X2: [[u64; PATTERN_SIZE * 1 * 2]; 2] = [
     ],
 ];
 
-const SP_CHARS_1X4: [[u64; PATTERN_SIZE * 1 * 4]; 9] = [
+const SP_CHARS_1X4: &[[u64; PATTERN_SIZE * 1 * 4]] = &[
     [
         0x0001020202010000,
         0x0102030403020100,
@@ -379,7 +379,7 @@ const SP_CHARS_1X4: [[u64; PATTERN_SIZE * 1 * 4]; 9] = [
     ],
 ];
 
-const SP_CHARS_2X2: [[u64; PATTERN_SIZE * 2 * 2]; 2] = [
+const SP_CHARS_2X2: &[[u64; PATTERN_SIZE * 2 * 2]] = &[
     [
         0x0000000000000012,0x1300000000000000,
         0x0000000000000012,0x1300000000000000,
@@ -418,7 +418,7 @@ const SP_CHARS_2X2: [[u64; PATTERN_SIZE * 2 * 2]; 2] = [
     ],
 ];
 
-const SP_CHARS_8X8: [[u64; PATTERN_SIZE * 8 * 8]; 13] = [
+const SP_CHARS_8X8: &[[u64; PATTERN_SIZE * 8 * 8]] = &[
     [
         0x0000000000000000,0x0000000000000000,0x0000000000000000,0x0000000000000001,0x4848360500000000,0x0000000000000000,0x0000000000000000,0x0000000000000000,
         0x0000000000000000,0x0000000000000000,0x0000000000000000,0x000000000000003e,0x484d364607000000,0x0000000000000000,0x0000000000000000,0x0000000000000000,

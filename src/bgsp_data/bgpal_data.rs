@@ -1,6 +1,6 @@
 use bgsp_lib2::bgsp_common::{Rgba, NUM_PALETTE_TBL, NUM_PALETTE_COL};
 
-pub static COLOR_TBL: [[Rgba<u8>; NUM_PALETTE_COL]; NUM_PALETTE_TBL] = {
+pub const COLOR_TBL: [[Rgba<u8>; NUM_PALETTE_COL]; NUM_PALETTE_TBL] = {
     let mut tbl: [[Rgba<u8>; NUM_PALETTE_COL]; NUM_PALETTE_TBL] = [[Rgba([0, 0, 0, 0]); NUM_PALETTE_COL]; NUM_PALETTE_TBL];
     let mut tbl_no = 0;
     while tbl_no < PALS.len() {
@@ -16,37 +16,36 @@ pub static COLOR_TBL: [[Rgba<u8>; NUM_PALETTE_COL]; NUM_PALETTE_TBL] = {
     tbl
 };
 
-const NUM_BG_PALETTE_TBL: usize = 5;
-const PALS: [&[(u8, u8, u8, u8)]; NUM_BG_PALETTE_TBL] = [
+const PALS: &[&[(u8, u8, u8, u8)]] = &[
     &[],
-    &BG_PAL_1,
-    &BG_PAL_2,
-    &BG_PAL_3,
-    &BG_PAL_4,
+    BG_PAL_1,
+    BG_PAL_2,
+    BG_PAL_3,
+    BG_PAL_4,
 ];
 
-const BG_PAL_1: [(u8, u8, u8, u8); 4] = [
+const BG_PAL_1: &[(u8, u8, u8, u8)] = &[
     (  0,   0,   0,   0),
     (216, 216, 216, 255),
     (  0,   0,   0, 255),
     (216, 216, 216, 255),
 ];
 
-const BG_PAL_2: [(u8, u8, u8, u8); 4] = [
+const BG_PAL_2: &[(u8, u8, u8, u8)] = &[
     (  0,   0,   0,   0),
     (216,   0,   0, 255),
     (  0,   0,   0, 255),
     (216,   0,   0, 255),
 ];
 
-const BG_PAL_3: [(u8, u8, u8, u8); 4] = [
+const BG_PAL_3: &[(u8, u8, u8, u8)] = &[
     (  0,   0,   0,   0),
     (  0, 216,   0, 255),
     (  0,   0,   0, 255),
     (  0, 216,   0, 255),
 ];
 
-const BG_PAL_4: [(u8, u8, u8, u8); 4] = [
+const BG_PAL_4: &[(u8, u8, u8, u8)] = &[
     (  0,   0,   0,   0),
     (216, 216,   0, 255),
     (  0,   0,   0, 255),
