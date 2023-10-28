@@ -1,38 +1,33 @@
-use piston_window::{
-    PistonWindow,
-    WindowSettings,
-    OpenGL,
-    EventLoop,
-    Key,
-};
-use sdl2_window::Sdl2Window;
-use std::collections::BTreeMap;
-// use once_cell::sync::OnceCell;
+mod bgsp_data;
+use bgsp_data::*;
+
+mod direction;
+use direction::*;
+
+mod input_role;
+use input_role::*;
+
+mod game_window;
+use game_window::*;
+
+mod wait_and_update;
 
 use bgsp_lib2::{
     bgsp_common::*,
     bg_plane::*,
-    sp_resources::*,
+    sp_resources::SpResources,
 };
 
-mod bgsp_data;
-use bgsp_data::*;
-mod direction;
-use direction::*;
-mod input_role;
-use input_role::*;
-mod wait_and_update;
+/*
+use audio_lib::{
+    AudioContext,
+    Control,
+    AUDIO_HALT_DATA,
+};
+*/
 
-pub type GameWindow = PistonWindow<Sdl2Window>;
-
-pub struct DisplayInfo {
-    pub full_screen: bool,
-    pub vm_rect_size: (i32, i32),
-    pub rotation: Direction,
-    pub pixel_scale: i32,
-    pub margin: i32,
-    pub f_count: i32,
-}
+use std::collections::BTreeMap;
+// use once_cell::sync::OnceCell;
 
 const FULL_SCREEN: bool = false;
 const VM_RECT_SIZE: (i32, i32) = (48 * PATTERN_SIZE as i32, 60 * PATTERN_SIZE as i32);
@@ -48,83 +43,37 @@ fn main() {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
     // let audio_subsystem = sdl_context.audio().unwrap();
-    let mut window: GameWindow;
-    let mut display_info = {
-        let full_screen = FULL_SCREEN;
-        let vm_rect_size = VM_RECT_SIZE;
-        let rotation = ROTATION;
-        let pixel_scale = PIXEL_SCALE;
-        let margin = WINDOW_MARGIN;
-        let view_rect = {
-            let (width, height) = (vm_rect_size.0 * pixel_scale, vm_rect_size.1 * pixel_scale);
-            match rotation {
-                Direction::Up    | Direction::Down => (width, height),
-                Direction::Right | Direction::Left => (height, width),
-            }
-        };
-
-        window = {
-            const OPENGL_VER: OpenGL = OpenGL::V3_2;
-            let window_title = format!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
-            let window_rect_size = if full_screen {
-                [8192, 8192]
-            } else {
-                [(view_rect.0 + margin * 2) as u32, (view_rect.1 + margin * 2) as u32]
-            };
-            let window_setting = WindowSettings::new(&window_title, window_rect_size)
-                .samples(0)
-                .fullscreen(full_screen)
-                .exit_on_esc(true)
-                .graphics_api(OpenGL::V3_2)
-                .vsync(true)
-                .resizable(false)
-                .decorated(true)
-                .controllers(true)
-            ;
-            let sdl2_window = Sdl2Window::with_subsystem(
-                video_subsystem,
-                &window_setting,
-            ).unwrap();
-            PistonWindow::new(OPENGL_VER, 0, sdl2_window)
-        };
-        window.set_max_fps(120);
-        window.set_ups(60);
-        window.set_ups_reset(0);
-        window.set_swap_buffers(true);
-        window.set_bench_mode(false);
-        window.set_lazy(false);
-        DisplayInfo {
-            full_screen,
-            vm_rect_size,
-            rotation,
-            pixel_scale,
-            margin,
-            f_count: 0,
-        }
-    };
+    let mut game_window = GameWindow::new(
+        video_subsystem,
+        FULL_SCREEN,
+        VM_RECT_SIZE,
+        ROTATION,
+        PIXEL_SCALE,
+        WINDOW_MARGIN,
+    );
 
     let mut keyboard_map: BTreeMap<piston_window::Key, Vec<_>> = BTreeMap::new();
     {
         let key_set_list = [
-            (Key::D1,    InputRole::Button0),
-            (Key::D2,    InputRole::Button1),
-            (Key::D3,    InputRole::Button2),
-            (Key::D4,    InputRole::Button3),
-            (Key::Z,     InputRole::Button4),
-            (Key::X,     InputRole::Button5),
-            (Key::C,     InputRole::Button6),
-            (Key::Space, InputRole::Button7),
-            (Key::Space, InputRole::Button4),
-            (Key::W,     InputRole::Up),
-            (Key::D,     InputRole::Right),
-            (Key::S,     InputRole::Down),
-            (Key::A,     InputRole::Left),
-            (Key::E,     InputRole::Up),
-            (Key::E,     InputRole::Right),
-            (Key::Up,    InputRole::Up2),
-            (Key::Right, InputRole::Right2),
-            (Key::Down,  InputRole::Down2),
-            (Key::Left,  InputRole::Left2),
+            (piston_window::Key::D1,    InputRole::Button0),
+            (piston_window::Key::D2,    InputRole::Button1),
+            (piston_window::Key::D3,    InputRole::Button2),
+            (piston_window::Key::D4,    InputRole::Button3),
+            (piston_window::Key::Z,     InputRole::Button4),
+            (piston_window::Key::X,     InputRole::Button5),
+            (piston_window::Key::C,     InputRole::Button6),
+            (piston_window::Key::Space, InputRole::Button7),
+            (piston_window::Key::Space, InputRole::Button4),
+            (piston_window::Key::W,     InputRole::Up),
+            (piston_window::Key::D,     InputRole::Right),
+            (piston_window::Key::S,     InputRole::Down),
+            (piston_window::Key::A,     InputRole::Left),
+            (piston_window::Key::E,     InputRole::Up),
+            (piston_window::Key::E,     InputRole::Right),
+            (piston_window::Key::Up,    InputRole::Up2),
+            (piston_window::Key::Right, InputRole::Right2),
+            (piston_window::Key::Down,  InputRole::Down2),
+            (piston_window::Key::Left,  InputRole::Left2),
         ];
         for key_set in key_set_list {
             if let Some(role_list) = keyboard_map.get_mut(&key_set.0) {
@@ -142,7 +91,7 @@ fn main() {
             VM_RECT_SIZE,
             &bgchar_data::BG_PATTERN_TBL,
             &bgpal_data::COLOR_TBL,
-            display_info.pixel_scale,
+            game_window.pixel_scale(),
         );
 
         let bg1 = BgPlane::new(
@@ -150,7 +99,7 @@ fn main() {
             VM_RECT_SIZE,
             &bgchar_data::BG_PATTERN_TBL,
             &bgpal_data::COLOR_TBL,
-            display_info.pixel_scale,
+            game_window.pixel_scale(),
         );
         (bg0, bg1)
     };
@@ -159,10 +108,10 @@ fn main() {
         MAX_SPRITES,
         &spchar_data::SP_PATTERN_TBL,
         &sppal_data::COLOR_TBL,
-        display_info.pixel_scale,
+        game_window.pixel_scale(),
     );
 
-    if display_info.full_screen { sdl_context.mouse().show_cursor(false) }
+    if game_window.full_screen() { sdl_context.mouse().show_cursor(false) }
 
     let mut t_count = 0;
     // let mut main_state = 0;
@@ -304,11 +253,13 @@ fn main() {
                 sp_idx += 1;
             }
         }
-        if input_role_state.get(InputRole::Button1).1 & 0b1111 == 0b1100 {
-            display_info.rotation = display_info.rotation.turn_right();
-            display_info.f_count = 0;
+        if input_role_state.get(InputRole::Button0).1 & 0b1111 == 0b1100 {
+            game_window.turn_left();
         }
-        if wait_and_update::doing(&mut window, &mut spr, &mut bg, &mut display_info, &keyboard_map, &mut input_role_state) {
+        if input_role_state.get(InputRole::Button1).1 & 0b1111 == 0b1100 {
+            game_window.turn_right();
+        }
+        if wait_and_update::doing(&mut game_window, &mut spr, &mut bg, &keyboard_map, &mut input_role_state) {
             break 'main_loop;
         }
         t_count += 1;

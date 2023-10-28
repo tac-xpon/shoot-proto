@@ -2,7 +2,6 @@ use crate::{
     direction::*,
     input_role::*,
     GameWindow,
-    DisplayInfo,
 };
 use std::collections::BTreeMap;
 use piston_window::*;
@@ -12,14 +11,13 @@ use bgsp_lib2::{
 };
 
 pub fn doing(
-    window: &mut GameWindow,
+    game_window: &mut GameWindow,
     spr: &mut SpResources,
     bg: &mut (BgPlane, BgPlane),
-    info: &mut DisplayInfo,
     keyboard_map: &BTreeMap<piston_window::Key, Vec<InputRole>>,
     input_role_state: &mut InputRoleState,
 ) -> bool {
-    let mut texture_context = window.create_texture_context();
+    let mut texture_context = game_window.mut_window().create_texture_context();
     let texture_settings = TextureSettings::new();
     let _ = bg.0.rendering();
     let bg0_whole = Texture::from_image(
@@ -36,11 +34,11 @@ pub fn doing(
     // Sprites
     let sp_drawn = Texture::from_image(
         &mut texture_context,
-        &spr.rendering(info.vm_rect_size.0 as i32, info.vm_rect_size.1 as i32),
+        &spr.rendering(game_window.vm_rect_size().0 as i32, game_window.vm_rect_size().1 as i32),
         &texture_settings,
     ).unwrap();
 
-    while let Some(event) = window.next() {
+    while let Some(event) = game_window.mut_window().next() {
         if let Some(Button::Keyboard(k)) = event.press_args() {
             if let Some(role_list) = keyboard_map.get(&k) {
                 for role in role_list { input_role_state.set_true(*role) }
@@ -53,18 +51,23 @@ pub fn doing(
         }
         if let Event::Loop(Loop::Render(_)) = event {
             input_role_state.update_history();
-            let window_size = window.size();
-            window.draw_2d(&event, |context, graphics, _device| {
+            let vm_rect_size = game_window.vm_rect_size();
+            let window_size = game_window.window().size();
+            let rotation = game_window.rotation();
+            let pixel_scale = game_window.pixel_scale();
+            let margin = game_window.margin();
+            let f_count = game_window.f_count();
+            game_window.mut_window().draw_2d(&event, |context, graphics, _device| {
                 let (vm_rect_width, vm_rect_height, pixel_scale, margin_2x) = (
-                    info.vm_rect_size.0,
-                    info.vm_rect_size.1,
-                    info.pixel_scale,
-                    info.margin * 2,
+                    vm_rect_size.0,
+                    vm_rect_size.1,
+                    pixel_scale,
+                    margin * 2,
                 );
                 let (zoom, h_offset, v_offset) = {
                     let view_rect = {
                         let (width, height) = (vm_rect_width * pixel_scale, vm_rect_height * pixel_scale);
-                        match info.rotation {
+                        match rotation {
                             Direction::Up    | Direction::Down => (width, height),
                             Direction::Right | Direction::Left => (height, width),
                         }
@@ -77,14 +80,14 @@ pub fn doing(
                     (zoom, h_offset, v_offset)
                 };
                 let base_transform = context.transform.zoom(zoom).trans(h_offset / zoom, v_offset / zoom);
-                let transform = match info.rotation {
+                let transform = match rotation {
                     Direction::Up    => base_transform.rot_deg(  0.0).trans(0.0, 0.0),
                     Direction::Right => base_transform.rot_deg( 90.0).trans(0.0, -((vm_rect_height * pixel_scale) as f64)),
                     Direction::Down  => base_transform.rot_deg(180.0).trans(-((vm_rect_width * pixel_scale) as f64), -((vm_rect_height * pixel_scale) as f64)),
                     Direction::Left  => base_transform.rot_deg(270.0).trans(-((vm_rect_width * pixel_scale) as f64), 0.0),
                 };
                 let draw_inside = draw_state::DrawState::new_inside();
-                if info.f_count < 4 {
+                if f_count < 4 {
                     // Initialize
                     graphics.clear_color([0.0, 0.0, 0.0, 1.0]);
                     graphics.clear_stencil(0);
@@ -127,7 +130,7 @@ pub fn doing(
                     graphics,
                 );
             });
-            info.f_count += 1;
+            game_window.inc_f_count();
             return false;
         }
     }
