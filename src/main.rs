@@ -91,7 +91,7 @@ fn main() {
             VM_RECT_SIZE,
             &bgchar_data::BG_PATTERN_TBL,
             &bgpal_data::COLOR_TBL,
-            game_window.pixel_scale(),
+            game_window.pixel_scale() as i32,
         );
 
         let bg1 = BgPlane::new(
@@ -99,7 +99,7 @@ fn main() {
             VM_RECT_SIZE,
             &bgchar_data::BG_PATTERN_TBL,
             &bgpal_data::COLOR_TBL,
-            game_window.pixel_scale(),
+            game_window.pixel_scale() as i32,
         );
         (bg0, bg1)
     };
@@ -108,10 +108,12 @@ fn main() {
         MAX_SPRITES,
         &spchar_data::SP_PATTERN_TBL,
         &sppal_data::COLOR_TBL,
-        game_window.pixel_scale(),
+        game_window.pixel_scale() as i32,
     );
 
-    if game_window.full_screen() { sdl_context.mouse().show_cursor(false) }
+    if game_window.full_screen() {
+        sdl_context.mouse().show_cursor(false);
+    }
 
     let mut t_count = 0;
     // let mut main_state = 0;
@@ -138,47 +140,47 @@ fn main() {
             .set_cur_pos(4,0)
             .put_string(&format!("{:3}[{:3}]", shots.len(), unused.len()), None);
         if input_role_state.get(InputRole::Up2).0 {
-            if v_y > 0 { v_y = 0 } else {
+            if v_y > 0 { v_y = 0; } else {
                 v_y -= 256;
-                if v_y < -512 { v_y = -512 }
+                if v_y < -512 { v_y = -512; }
             }
         }
         if input_role_state.get(InputRole::Down2).0 {
-            if v_y < 0 { v_y = 0 } else {
+            if v_y < 0 { v_y = 0; } else {
                 v_y += 256;
-                if v_y > 512 { v_y = 512 }
+                if v_y > 512 { v_y = 512; }
             }
         }
         if input_role_state.get(InputRole::Left2).0 {
-            if v_x > 0 { v_x = 0 } else {
+            if v_x > 0 { v_x = 0; } else {
                 v_x -= 256;
-                if v_x < -768 { v_x = -768 }
+                if v_x < -768 { v_x = -768; }
             }
             my_tilt -= 2;
-            if my_tilt < -34 { my_tilt = -34 }
+            if my_tilt < -34 { my_tilt = -34; }
         }
         if input_role_state.get(InputRole::Right2).0 {
-            if v_x < 0 { v_x = 0 } else {
+            if v_x < 0 { v_x = 0; } else {
                 v_x += 256;
-                if v_x > 768 { v_x = 768 }
+                if v_x > 768 { v_x = 768; }
             }
             my_tilt += 2;
-            if my_tilt > 34 { my_tilt = 34 }
+            if my_tilt > 34 { my_tilt = 34; }
         }
         if v_x != 0 {
-            v_x += if v_x < 0 { 128 } else { -128 }
+            v_x += if v_x < 0 { 128 } else { -128 };
         }
         if v_y != 0 {
-            v_y += if v_y < 0 { 128 } else { -128 }
+            v_y += if v_y < 0 { 128 } else { -128 };
         }
         my_x256 += v_x;
         my_y256 += v_y;
-        if my_x256 < -10 * 256 { my_x256 = -10 * 256 }
-        if my_x256 > 329 * 256 { my_x256 = 329 * 256 }
-        if my_y256 < 100 * 256 { my_y256 = 100 * 256 }
-        if my_y256 > 412 * 256 { my_y256 = 412 * 256 }
+        if my_x256 < -10 * 256 { my_x256 = -10 * 256; }
+        if my_x256 > 329 * 256 { my_x256 = 329 * 256; }
+        if my_y256 < 100 * 256 { my_y256 = 100 * 256; }
+        if my_y256 > 412 * 256 { my_y256 = 412 * 256; }
         if my_tilt != 0 {
-            my_tilt += if my_tilt < 0 { 1 } else { -1 }
+            my_tilt += if my_tilt < 0 { 1 } else { -1 };
         }
         {
             let (my_code, drift, l_offset, r_offset) = match my_tilt {

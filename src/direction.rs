@@ -12,6 +12,7 @@ impl Default for Direction {
     }
 }
 
+#[allow(dead_code)]
 impl Direction {
     pub fn turn_right(&self) -> Self {
         match self {
