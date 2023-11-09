@@ -15,7 +15,7 @@ mod wait_and_update;
 use bgsp_lib2::{
     bgsp_common::*,
     bg_plane::*,
-    sp_resources::SpResources,
+    sp_resources::*,
 };
 
 /*
@@ -85,30 +85,36 @@ fn main() {
     }
     let mut input_role_state = InputRoleState::default();
 
+    let mut bg_texture_bank = BgTextureBank::new(
+        &bgchar_data::BG_PATTERN_TBL,
+        &bgpal_data::COLOR_TBL,
+        game_window.pixel_scale() as i32,
+    );
+    let rc_bg_texture_bank = Rc::new(RefCell::new(&mut bg_texture_bank));
     let mut bg = {
         let bg0 = BgPlane::new(
             BG0_RECT_SIZE,
             VM_RECT_SIZE,
-            &bgchar_data::BG_PATTERN_TBL,
-            &bgpal_data::COLOR_TBL,
-            game_window.pixel_scale() as i32,
+            rc_bg_texture_bank.clone(),
         );
 
         let bg1 = BgPlane::new(
             BG1_RECT_SIZE,
             VM_RECT_SIZE,
-            &bgchar_data::BG_PATTERN_TBL,
-            &bgpal_data::COLOR_TBL,
-            game_window.pixel_scale() as i32,
+            rc_bg_texture_bank.clone(),
         );
         (bg0, bg1)
     };
 
-    let mut spr = SpResources::new(
-        MAX_SPRITES,
+    let mut sp_texture_bank = SpTextureBank::new(
         &spchar_data::SP_PATTERN_TBL,
         &sppal_data::COLOR_TBL,
         game_window.pixel_scale() as i32,
+    );
+    let rc_sp_texture_bank = Rc::new(RefCell::new(&mut sp_texture_bank));
+    let mut spr = SpResources::new(
+        MAX_SPRITES,
+        rc_sp_texture_bank.clone(),
     );
 
     if game_window.full_screen() {
