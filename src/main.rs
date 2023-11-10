@@ -30,7 +30,8 @@ use std::collections::BTreeMap;
 // use once_cell::sync::OnceCell;
 
 const FULL_SCREEN: bool = false;
-const VM_RECT_SIZE: (i32, i32) = (48 * PATTERN_SIZE as i32, 60 * PATTERN_SIZE as i32);
+const VM_RECT_SIZE: (i32, i32) = (48, 60);
+const VM_RECT_PIXEL_SIZE: (i32, i32) = (VM_RECT_SIZE.0 * PATTERN_SIZE as i32, VM_RECT_SIZE.1 * PATTERN_SIZE as i32);
 const ROTATION: Direction = Direction::Up;
 const PIXEL_SCALE: i32 = 2;
 const WINDOW_MARGIN: i32 = 2;
@@ -46,7 +47,7 @@ fn main() {
     let mut game_window = GameWindow::new(
         video_subsystem,
         FULL_SCREEN,
-        VM_RECT_SIZE,
+        VM_RECT_PIXEL_SIZE,
         ROTATION,
         PIXEL_SCALE,
         WINDOW_MARGIN,
@@ -94,13 +95,13 @@ fn main() {
     let mut bg = {
         let bg0 = BgPlane::new(
             BG0_RECT_SIZE,
-            VM_RECT_SIZE,
+            VM_RECT_PIXEL_SIZE,
             rc_bg_texture_bank.clone(),
         );
 
         let bg1 = BgPlane::new(
             BG1_RECT_SIZE,
-            VM_RECT_SIZE,
+            VM_RECT_PIXEL_SIZE,
             rc_bg_texture_bank.clone(),
         );
         (bg0, bg1)
@@ -117,11 +118,22 @@ fn main() {
         rc_sp_texture_bank.clone(),
     );
 
+    let text_buf = {
+        let mut buf = Vec::new();
+        let text_path = std::env::current_dir().unwrap().join("src").join("main.rs");
+        for line in std::fs::read_to_string(text_path).unwrap().lines() {
+            buf.push(line.to_string());
+        }
+        buf.push("[eof]------------------------------------------------------------------".to_string());
+        buf
+    };
+
     if game_window.full_screen() {
         sdl_context.mouse().show_cursor(false);
     }
 
     let mut t_count = 0;
+    let mut scroll_pos = 0;
     // let mut main_state = 0;
 
     let (mut my_x256, mut my_y256) = (160 * 256, 320 * 256);
@@ -131,8 +143,12 @@ fn main() {
     let mut shots: Vec<Option<((i32, i32), (i32, i32), SpCode)>> = Vec::with_capacity(16);
     let mut unused: Vec<usize> = Vec::with_capacity(16);
 
-    bg.0.set_cur_pos(20, 20)
-        .put_string("Test for shoot", Some(&CharAttributes::new(2, BgSymmetry::Normal)));
+    {
+        let s = "Test for shoot".to_string();
+        let x = (VM_RECT_SIZE.0 - s.len() as i32) / 2;
+        bg.0.set_cur_pos(x, 20)
+            .put_string(&s, Some(&CharAttributes::new(3, BgSymmetry::Normal)));
+    }
     spr.sp[0].code(6).palette(1).symmetry(SpSymmetry::Normal);
     spr.sp[1].code(17).palette(3).symmetry(SpSymmetry::Normal);
     spr.sp[2].code(17).palette(3).symmetry(SpSymmetry::Normal);
@@ -140,6 +156,22 @@ fn main() {
 
     input_role_state.clear_all();
     'main_loop: loop {
+        if scroll_pos % 8 == 0 {
+            let len = text_buf.len();
+            let bgpos_y = (scroll_pos / 8) - 1;
+            let text_line = ((len as i32 + bgpos_y) % len as i32 + len as i32) % len as i32;
+            bg.0.set_cur_pos(0, 1)
+                .put_string(&format!("{:3} {:3}/{:3} ", bgpos_y, text_line, len), Some(&CharAttributes::new(1, BgSymmetry::Normal)));
+            bg.1.set_cur_pos(0, bgpos_y)
+                .put_string(&text_buf[text_line as usize], Some(&CharAttributes::new(5, BgSymmetry::Normal)));
+            let remains = BG1_RECT_SIZE.0 - bg.1.cur_pos().0;
+            if remains > 0 {
+                bg.1.put_code_n(' ', remains);
+            }
+        }
+        bg.1.set_view_pos(my_x256 / 512, scroll_pos);
+        scroll_pos -= 1;
+
         bg.0.set_cur_pos(25,0)
             .put_string(&format!("({:3}, {:3})", my_x256 / 256, my_y256 / 256), None)
             .put_achar(&AChar::new('*', if t_count % 4 < 2 { 0 } else { 1 }, BgSymmetry::Normal))
