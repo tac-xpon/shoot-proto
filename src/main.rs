@@ -149,10 +149,12 @@ fn main() {
         bg.0.set_cur_pos(x, 20)
             .put_string(&s, Some(&CharAttributes::new(3, BgSymmetry::Normal)));
     }
-    spr.sp[0].code(6).palette(1).symmetry(SpSymmetry::Normal);
-    spr.sp[1].code(17).palette(3).symmetry(SpSymmetry::Normal);
-    spr.sp[2].code(17).palette(3).symmetry(SpSymmetry::Normal);
-    bg.0.set_cur_pos(0, 0).put_achar_n(&AChar::new(' ', 1, BgSymmetry::Normal), 80);
+    spr.sp[0].code( 6).palette(1).symmetry(SpSymmetry::Normal); // PLAYER FIGHTER
+    spr.sp[1].code(17).palette(3).symmetry(SpSymmetry::Normal); // BACK FIRE
+    spr.sp[2].code(17).palette(3).symmetry(SpSymmetry::Normal); // BACK FIRE
+    bg.0.set_cur_pos(0, 0).put_achar_n(&AChar::new(' ', 1, BgSymmetry::Normal), VM_RECT_SIZE.0);
+    bg.0.set_cur_pos(0, 1).put_achar_n(&AChar::new(' ', 1, BgSymmetry::Normal), VM_RECT_SIZE.0);
+    bg.1.fill_attributes(&CharAttributes::new(5, BgSymmetry::Normal));
 
     input_role_state.clear_all();
     'main_loop: loop {
@@ -161,9 +163,9 @@ fn main() {
             let bgpos_y = (scroll_pos / 8) - 1;
             let text_line = ((len as i32 + bgpos_y) % len as i32 + len as i32) % len as i32;
             bg.0.set_cur_pos(0, 1)
-                .put_string(&format!("{:3} {:3}/{:3} ", bgpos_y, text_line, len), Some(&CharAttributes::new(1, BgSymmetry::Normal)));
+                .put_string(&format!("{:3} {:3}/{:3} ", bgpos_y, text_line, len), None);
             bg.1.set_cur_pos(0, bgpos_y)
-                .put_string(&text_buf[text_line as usize], Some(&CharAttributes::new(5, BgSymmetry::Normal)));
+                .put_string(&text_buf[text_line as usize], None);
             let remains = BG1_RECT_SIZE.0 - bg.1.cur_pos().0;
             if remains > 0 {
                 bg.1.put_code_n(' ', remains);
@@ -174,7 +176,7 @@ fn main() {
 
         bg.0.set_cur_pos(25,0)
             .put_string(&format!("({:3}, {:3})", my_x256 / 256, my_y256 / 256), None)
-            .put_achar(&AChar::new('*', if t_count % 4 < 2 { 0 } else { 1 }, BgSymmetry::Normal))
+            .put_code(if t_count % 4 < 2 { ' ' } else { '*' })
             .set_cur_pos(4,0)
             .put_string(&format!("{:3}[{:3}]", shots.len(), unused.len()), None);
         if input_role_state.get(InputRole::Up2).0 {
@@ -226,15 +228,14 @@ fn main() {
                 -28..=-22 => ( 1, -1, 23, 36),
                 -21..=-15 => ( 2, -1, 22, 36),
                 -14..=-8  => ( 3, -1, 22, 37),
-                -7..=-3   => ( 4,  0, 21, 37),
-                -2..=-1   => ( 5,  0, 21, 37),
-                0         => ( 6,  0, 21, 37),
-                1..=2     => ( 7,  0, 21, 37),
-                3..=7     => ( 8,  0, 21, 37),
-                8..=14    => ( 9,  1, 21, 36),
-                15..=21   => (10,  1, 22, 36),
-                22..=28   => (11,  1, 22, 35),
-                29..=40   => (12,  1, 22, 35),
+                 -7..=-3  => ( 4,  0, 21, 37),
+                 -2..=-1  => ( 5,  0, 21, 37),
+                  1..=2   => ( 7,  0, 21, 37),
+                  3..=7   => ( 8,  0, 21, 37),
+                  8..=14  => ( 9,  1, 21, 36),
+                 15..=21  => (10,  1, 22, 36),
+                 22..=28  => (11,  1, 22, 35),
+                 29..=40  => (12,  1, 22, 35),
                 _         => ( 6,  0, 21, 37)
             };
             let my_pos = SpPos::new(my_x256 / 256 + drift, my_y256 / 256);
@@ -293,10 +294,10 @@ fn main() {
                 sp_idx += 1;
             }
         }
-        if input_role_state.get(InputRole::Button0).1 & 0b1111 == 0b1100 {
+        if input_role_state.get(InputRole::Button0).1 & 0b1111 == 0b0011 { // Release -> Press
             game_window.turn_left();
         }
-        if input_role_state.get(InputRole::Button1).1 & 0b1111 == 0b1100 {
+        if input_role_state.get(InputRole::Button1).1 & 0b1111 == 0b1100 { // Press -> Release
             game_window.turn_right();
         }
         if wait_and_update::doing(&mut game_window, &mut spr, &mut bg, &keyboard_map, &mut input_role_state) {
