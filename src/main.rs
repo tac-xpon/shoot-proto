@@ -26,8 +26,8 @@ use audio_lib::{
 };
 */
 
-use std::collections::BTreeMap;
 // use once_cell::sync::OnceCell;
+use piston_window::{Key, ControllerButton, ControllerHat, HatState};
 
 const FULL_SCREEN: bool = false;
 const VM_RECT_SIZE: (i32, i32) = (48, 60);
@@ -53,36 +53,58 @@ fn main() {
         WINDOW_MARGIN,
     );
 
-    let mut keyboard_map: BTreeMap<piston_window::Key, Vec<_>> = BTreeMap::new();
+    let mut keyboard_map = InputRoleMap::<Key>::new();
     {
-        let key_set_list = [
-            (piston_window::Key::D1,    InputRole::Button0),
-            (piston_window::Key::D2,    InputRole::Button1),
-            (piston_window::Key::D3,    InputRole::Button2),
-            (piston_window::Key::D4,    InputRole::Button3),
-            (piston_window::Key::Z,     InputRole::Button4),
-            (piston_window::Key::X,     InputRole::Button5),
-            (piston_window::Key::C,     InputRole::Button6),
-            (piston_window::Key::Space, InputRole::Button7),
-            (piston_window::Key::Space, InputRole::Button4),
-            (piston_window::Key::W,     InputRole::Up),
-            (piston_window::Key::D,     InputRole::Right),
-            (piston_window::Key::S,     InputRole::Down),
-            (piston_window::Key::A,     InputRole::Left),
-            (piston_window::Key::E,     InputRole::Up),
-            (piston_window::Key::E,     InputRole::Right),
-            (piston_window::Key::Up,    InputRole::Up2),
-            (piston_window::Key::Right, InputRole::Right2),
-            (piston_window::Key::Down,  InputRole::Down2),
-            (piston_window::Key::Left,  InputRole::Left2),
+        let set_list = [
+            (Key::D1,    InputRole::ViewRotLeft),
+            (Key::D2,    InputRole::ViewRotRight),
+            (Key::D3,    InputRole::Start),
+            (Key::D4,    InputRole::Pause),
+            (Key::Z,     InputRole::MainFire),
+            (Key::X,     InputRole::SubFire),
+            (Key::C,     InputRole::MainFire),
+            (Key::Space, InputRole::MainFire),
+            (Key::Space, InputRole::SubFire),
+            (Key::W,     InputRole::Up),
+            (Key::D,     InputRole::Right),
+            (Key::S,     InputRole::Down),
+            (Key::A,     InputRole::Left),
+            (Key::Up,    InputRole::Up),
+            (Key::Right, InputRole::Right),
+            (Key::Down,  InputRole::Down),
+            (Key::Left,  InputRole::Left),
         ];
-        for key_set in key_set_list {
-            if let Some(role_list) = keyboard_map.get_mut(&key_set.0) {
-                role_list.push(key_set.1);
-            } else {
-                keyboard_map.insert(key_set.0, vec![key_set.1]);
-            }
-        }
+        keyboard_map.assign(&set_list);
+    }
+    let mut button_map = InputRoleMap::<ControllerButton>::new();
+    {
+        let set_list = [
+            (ControllerButton {id: 0, button: 0}, InputRole::MainFire),
+            (ControllerButton {id: 0, button: 1}, InputRole::SubFire),
+            (ControllerButton {id: 0, button: 2}, InputRole::MainFire),
+            (ControllerButton {id: 0, button: 3}, InputRole::MainFire),
+            (ControllerButton {id: 0, button: 3}, InputRole::SubFire),
+        ];
+        button_map.assign(&set_list);
+    }
+    let mut hat_map = InputRoleMap::<ControllerHat>::new();
+    {
+        let set_list = [
+            (ControllerHat {id: 0, which: 0, state: HatState::Centered}, InputRole::None),
+            (ControllerHat {id: 0, which: 0, state: HatState::Up}, InputRole::Up),
+            (ControllerHat {id: 0, which: 0, state: HatState::Down}, InputRole::Down),
+            (ControllerHat {id: 0, which: 0, state: HatState::Right}, InputRole::Right),
+            (ControllerHat {id: 0, which: 0, state: HatState::Left}, InputRole::Left),
+            (ControllerHat {id: 0, which: 0, state: HatState::RightUp}, InputRole::Right),
+            (ControllerHat {id: 0, which: 0, state: HatState::RightUp}, InputRole::Up),
+            (ControllerHat {id: 0, which: 0, state: HatState::RightDown}, InputRole::Right),
+            (ControllerHat {id: 0, which: 0, state: HatState::RightDown}, InputRole::Down),
+            (ControllerHat {id: 0, which: 0, state: HatState::LeftUp}, InputRole::Left),
+            (ControllerHat {id: 0, which: 0, state: HatState::LeftUp}, InputRole::Up),
+            (ControllerHat {id: 0, which: 0, state: HatState::LeftDown}, InputRole::Left),
+            (ControllerHat {id: 0, which: 0, state: HatState::LeftDown}, InputRole::Down),
+        ];
+        hat_map.assign(&set_list);
     }
     let mut input_role_state = InputRoleState::default();
 
@@ -142,6 +164,8 @@ fn main() {
 
     let mut shots: Vec<Option<((i32, i32), (i32, i32), SpCode)>> = Vec::with_capacity(16);
     let mut unused: Vec<usize> = Vec::with_capacity(16);
+    let mut sub_weapon_heat = 0;
+    let mut sub_weapon_cool = 0;
 
     {
         let s = "Test for shoot".to_string();
@@ -179,40 +203,49 @@ fn main() {
             .put_code(if t_count % 4 < 2 { ' ' } else { '*' })
             .set_cur_pos(4,0)
             .put_string(&format!("{:3}[{:3}]", shots.len(), unused.len()), None);
-        if input_role_state.get(InputRole::Up2).0 {
-            if v_y > 0 { v_y = 0; } else {
-                v_y -= 256;
-                if v_y < -512 { v_y = -512; }
+
+        match (input_role_state.get(InputRole::Up).0, input_role_state.get(InputRole::Down).0) {
+            (true, false) => {
+                if v_y > 0 { v_y = 0; } else {
+                    v_y -= 256;
+                    if v_y < -512 { v_y = -512; }
+                }
             }
-        }
-        if input_role_state.get(InputRole::Down2).0 {
-            if v_y < 0 { v_y = 0; } else {
-                v_y += 256;
-                if v_y > 512 { v_y = 512; }
+            (false, true) => {
+                if v_y < 0 { v_y = 0; } else {
+                    v_y += 256;
+                    if v_y > 512 { v_y = 512; }
+                }
             }
+            _ => {}
         }
-        if input_role_state.get(InputRole::Left2).0 {
-            if v_x > 0 { v_x = 0; } else {
-                v_x -= 256;
-                if v_x < -768 { v_x = -768; }
+        match (input_role_state.get(InputRole::Left).0, input_role_state.get(InputRole::Right).0) {
+            (true, false) => {
+                if v_x > 0 { v_x = 0; } else {
+                    v_x -= 256;
+                    if v_x < -768 { v_x = -768; }
+                }
+                my_tilt -= 2;
+                if my_tilt < -34 { my_tilt = -34; }
             }
-            my_tilt -= 2;
-            if my_tilt < -34 { my_tilt = -34; }
-        }
-        if input_role_state.get(InputRole::Right2).0 {
-            if v_x < 0 { v_x = 0; } else {
-                v_x += 256;
-                if v_x > 768 { v_x = 768; }
+            (false, true) => {
+                if v_x < 0 { v_x = 0; } else {
+                    v_x += 256;
+                    if v_x > 768 { v_x = 768; }
+                }
+                my_tilt += 2;
+                if my_tilt > 34 { my_tilt = 34; }
             }
-            my_tilt += 2;
-            if my_tilt > 34 { my_tilt = 34; }
+            _ => {}
         }
+
         if v_x != 0 {
             v_x += if v_x < 0 { 128 } else { -128 };
         }
         if v_y != 0 {
             v_y += if v_y < 0 { 128 } else { -128 };
         }
+
         my_x256 += v_x;
         my_y256 += v_y;
         if my_x256 < -10 * 256 { my_x256 = -10 * 256; }
@@ -251,29 +284,58 @@ fn main() {
             spr.sp(2).xy(my_pos.x + r_offset, my_pos.y + y_offset).code(back_fire).visible(vis);
         }
         {
-            if input_role_state.get(InputRole::Button4).0 {
+            const SHOT_PAT_NO: SpCode = 15;
+            const SUBSHOT_PAT_NO: SpCode = 13;
+            if input_role_state.get(InputRole::MainFire).0 {
                 let (dx, dy) = {
                 //    let t = (t_count % 16) - 8;
                 //    if t < 0 { -t * 128 } else { t * 128 }
                     ((t_count % 8) * 200 ,-14 * 256 + 96)
                 };
-                let new_shot = Some(((my_x256 + 21 * 256, my_y256 + 10 * 256), (-dx, dy), 15));
+                let new_shot = Some(((my_x256 + 21 * 256, my_y256 + 10 * 256), (-dx, dy), SHOT_PAT_NO));
                 if let Some(i) = unused.pop() {
                     shots[i] = new_shot;
                 } else {
                     shots.push(new_shot);
                 }
-                let new_shot = Some(((my_x256 + 35 * 256, my_y256 + 10 * 256), (dx, dy), 15));
+                let new_shot = Some(((my_x256 + 35 * 256, my_y256 + 10 * 256), (dx, dy), SHOT_PAT_NO));
                 if let Some(i) = unused.pop() {
                     shots[i] = new_shot;
                 } else {
                     shots.push(new_shot);
                 }
-                let new_shot = Some(((my_x256 + 28 * 256, my_y256 - 14 * 256), (0, dy), 15));
+                /*
+                let new_shot = Some(((my_x256 + 28 * 256, my_y256 - 14 * 256), (0, dy), SHOT_PAT_NO));
                 if let Some(i) = unused.pop() {
                     shots[i] = new_shot;
                 } else {
                     shots.push(new_shot);
+                }
+                */
+            }
+            if input_role_state.get(InputRole::SubFire).0 && sub_weapon_cool <= 0 {
+                let new_shot = Some(((my_x256 + 24 * 256, my_y256 + 10 * 256), (0, -32 * 256), SUBSHOT_PAT_NO));
+                if let Some(i) = unused.pop() {
+                    shots[i] = new_shot;
+                } else {
+                    shots.push(new_shot);
+                }
+                let new_shot = Some(((my_x256 + 24 * 256, my_y256 - 6 * 256), (0, -32 * 256), SUBSHOT_PAT_NO));
+                if let Some(i) = unused.pop() {
+                    shots[i] = new_shot;
+                } else {
+                    shots.push(new_shot);
+                }
+                sub_weapon_heat += 1;
+                if sub_weapon_heat > 8 {
+                    sub_weapon_cool = 12;
+                }
+            } else {
+                if sub_weapon_heat > 0 {
+                    sub_weapon_heat -= 1;
+                }
+                if sub_weapon_cool > 0 {
+                    sub_weapon_cool -= 1;
                 }
             }
             let mut sp_idx = 16;
@@ -294,15 +356,20 @@ fn main() {
                 sp_idx += 1;
             }
         }
-        if input_role_state.get(InputRole::Button0).1 & 0b1111 == 0b0011 { // Release -> Press
+        if input_role_state.get(InputRole::ViewRotLeft).1 & 0b1111 == 0b0011 { // Release -> Press
             game_window.turn_left();
         }
-        if input_role_state.get(InputRole::Button1).1 & 0b1111 == 0b1100 { // Press -> Release
+        if input_role_state.get(InputRole::ViewRotRight).1 & 0b1111 == 0b1100 { // Press -> Release
             game_window.turn_right();
         }
-        if wait_and_update::doing(&mut game_window, &mut spr, &mut bg, &keyboard_map, &mut input_role_state) {
+        if wait_and_update::doing(&mut game_window, &mut spr, &mut bg, &mut keyboard_map, &mut button_map, &mut hat_map) {
             break 'main_loop;
         }
+        input_role_state.clear_state();
+        input_role_state.update_state(&keyboard_map);
+        input_role_state.update_state(&button_map);
+        input_role_state.update_state(&hat_map);
+        input_role_state.update_history();
         t_count += 1;
     }
     sdl_context.mouse().show_cursor(true);

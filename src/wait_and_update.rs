@@ -8,14 +8,14 @@ use bgsp_lib2::{
     sp_resources::*
 };
 use piston_window::*;
-use std::collections::BTreeMap;
 
 pub fn doing(
     game_window: &mut GameWindow,
     spr: &mut SpResources,
     bg: &mut (BgPlane, BgPlane),
-    keyboard_map: &BTreeMap<piston_window::Key, Vec<InputRole>>,
-    input_role_state: &mut InputRoleState,
+    keyboard_map: &mut InputRoleMap<Key>,
+    button_map: &mut InputRoleMap<ControllerButton>,
+    hat_map: &mut InputRoleMap<ControllerHat>,
 ) -> bool {
     let mut texture_context = game_window.mut_window().create_texture_context();
     let texture_settings = TextureSettings::new();
@@ -39,18 +39,21 @@ pub fn doing(
     ).unwrap();
 
     while let Some(event) = game_window.mut_window().next() {
-        if let Some(Button::Keyboard(k)) = event.press_args() {
-            if let Some(role_list) = keyboard_map.get(&k) {
-                for role in role_list { input_role_state.set_true(*role); }
-            }
-        }
-        if let Some(Button::Keyboard(k)) = event.release_args() {
-            if let Some(role_list) = keyboard_map.get(&k) {
-                for role in role_list { input_role_state.set_false(*role); }
+        if let Some(input) = event.button_args() {
+            match input.button {
+                Button::Keyboard(k) => {
+                    keyboard_map.update_state(k, input.state == ButtonState::Press);
+                }
+                Button::Controller(b) => {
+                    button_map.update_state_exclusive(b, input.state == ButtonState::Press);
+                }
+                Button::Hat(h) => {
+                    hat_map.update_state_exclusive(h, true);
+                }
+                _ => {}
             }
         }
         if let Event::Loop(Loop::Render(_)) = event {
-            input_role_state.update_history();
             let vm_rect_size = game_window.vm_rect_size();
             let window_size = game_window.window().size();
             let rotation = game_window.rotation();
