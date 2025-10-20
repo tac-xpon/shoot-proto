@@ -53,149 +53,143 @@ fn main() {
     );
 
     let mut keyboard_map = InputRoleMap::<Key>::new();
-    {
-        let set_list = [
-            (Key::D1, InputRole::ViewRotLeft),
-            (Key::D2, InputRole::ViewRotRight),
-            (Key::D3, InputRole::Start),
-            (Key::D4, InputRole::Pause),
-            (Key::Z, InputRole::MainFire),
-            (Key::X, InputRole::SubFire),
-            (Key::C, InputRole::MainFire),
-            (Key::Space, InputRole::MainFire),
-            (Key::Space, InputRole::SubFire),
-            (Key::W, InputRole::Up),
-            (Key::D, InputRole::Right),
-            (Key::S, InputRole::Down),
-            (Key::A, InputRole::Left),
-            (Key::Up, InputRole::Up),
-            (Key::Right, InputRole::Right),
-            (Key::Down, InputRole::Down),
-            (Key::Left, InputRole::Left),
-        ];
-        keyboard_map.assign(&set_list);
-    }
+    keyboard_map.assign(&[
+        (Key::D1, InputRole::ViewRotLeft),
+        (Key::D2, InputRole::ViewRotRight),
+        (Key::D3, InputRole::Start),
+        (Key::D4, InputRole::Pause),
+        (Key::Z, InputRole::MainFire),
+        (Key::X, InputRole::SubFire),
+        (Key::C, InputRole::MainFire),
+        (Key::Space, InputRole::MainFire),
+        (Key::Space, InputRole::SubFire),
+        (Key::W, InputRole::Up),
+        (Key::D, InputRole::Right),
+        (Key::S, InputRole::Down),
+        (Key::A, InputRole::Left),
+        (Key::Up, InputRole::Up),
+        (Key::Right, InputRole::Right),
+        (Key::Down, InputRole::Down),
+        (Key::Left, InputRole::Left),
+    ]);
+
     let mut button_map = InputRoleMap::<ControllerButton>::new();
-    {
-        let set_list = [
-            (ControllerButton { id: 0, button: 0 }, InputRole::MainFire),
-            (ControllerButton { id: 0, button: 1 }, InputRole::SubFire),
-            (ControllerButton { id: 0, button: 2 }, InputRole::MainFire),
-            (ControllerButton { id: 0, button: 3 }, InputRole::MainFire),
-            (ControllerButton { id: 0, button: 3 }, InputRole::SubFire),
-        ];
-        button_map.assign(&set_list);
-    }
+    button_map.assign(&[
+        (ControllerButton { id: 0, button: 0 }, InputRole::MainFire),
+        (ControllerButton { id: 0, button: 1 }, InputRole::SubFire),
+        (ControllerButton { id: 0, button: 2 }, InputRole::MainFire),
+        (ControllerButton { id: 0, button: 3 }, InputRole::MainFire),
+        (ControllerButton { id: 0, button: 3 }, InputRole::SubFire),
+    ]);
+
     let mut hat_map = InputRoleMap::<ControllerHat>::new();
-    {
-        let set_list = [
-            (
-                ControllerHat {
-                    id: 0,
-                    which: 0,
-                    state: HatState::Centered,
-                },
-                InputRole::None,
-            ),
-            (
-                ControllerHat {
-                    id: 0,
-                    which: 0,
-                    state: HatState::Up,
-                },
-                InputRole::Up,
-            ),
-            (
-                ControllerHat {
-                    id: 0,
-                    which: 0,
-                    state: HatState::Down,
-                },
-                InputRole::Down,
-            ),
-            (
-                ControllerHat {
-                    id: 0,
-                    which: 0,
-                    state: HatState::Right,
-                },
-                InputRole::Right,
-            ),
-            (
-                ControllerHat {
-                    id: 0,
-                    which: 0,
-                    state: HatState::Left,
-                },
-                InputRole::Left,
-            ),
-            (
-                ControllerHat {
-                    id: 0,
-                    which: 0,
-                    state: HatState::RightUp,
-                },
-                InputRole::Right,
-            ),
-            (
-                ControllerHat {
-                    id: 0,
-                    which: 0,
-                    state: HatState::RightUp,
-                },
-                InputRole::Up,
-            ),
-            (
-                ControllerHat {
-                    id: 0,
-                    which: 0,
-                    state: HatState::RightDown,
-                },
-                InputRole::Right,
-            ),
-            (
-                ControllerHat {
-                    id: 0,
-                    which: 0,
-                    state: HatState::RightDown,
-                },
-                InputRole::Down,
-            ),
-            (
-                ControllerHat {
-                    id: 0,
-                    which: 0,
-                    state: HatState::LeftUp,
-                },
-                InputRole::Left,
-            ),
-            (
-                ControllerHat {
-                    id: 0,
-                    which: 0,
-                    state: HatState::LeftUp,
-                },
-                InputRole::Up,
-            ),
-            (
-                ControllerHat {
-                    id: 0,
-                    which: 0,
-                    state: HatState::LeftDown,
-                },
-                InputRole::Left,
-            ),
-            (
-                ControllerHat {
-                    id: 0,
-                    which: 0,
-                    state: HatState::LeftDown,
-                },
-                InputRole::Down,
-            ),
-        ];
-        hat_map.assign(&set_list);
-    }
+    hat_map.assign(&[
+        (
+            ControllerHat {
+                id: 0,
+                which: 0,
+                state: HatState::Centered,
+            },
+            InputRole::None,
+        ),
+        (
+            ControllerHat {
+                id: 0,
+                which: 0,
+                state: HatState::Up,
+            },
+            InputRole::Up,
+        ),
+        (
+            ControllerHat {
+                id: 0,
+                which: 0,
+                state: HatState::Down,
+            },
+            InputRole::Down,
+        ),
+        (
+            ControllerHat {
+                id: 0,
+                which: 0,
+                state: HatState::Right,
+            },
+            InputRole::Right,
+        ),
+        (
+            ControllerHat {
+                id: 0,
+                which: 0,
+                state: HatState::Left,
+            },
+            InputRole::Left,
+        ),
+        (
+            ControllerHat {
+                id: 0,
+                which: 0,
+                state: HatState::RightUp,
+            },
+            InputRole::Right,
+        ),
+        (
+            ControllerHat {
+                id: 0,
+                which: 0,
+                state: HatState::RightUp,
+            },
+            InputRole::Up,
+        ),
+        (
+            ControllerHat {
+                id: 0,
+                which: 0,
+                state: HatState::RightDown,
+            },
+            InputRole::Right,
+        ),
+        (
+            ControllerHat {
+                id: 0,
+                which: 0,
+                state: HatState::RightDown,
+            },
+            InputRole::Down,
+        ),
+        (
+            ControllerHat {
+                id: 0,
+                which: 0,
+                state: HatState::LeftUp,
+            },
+            InputRole::Left,
+        ),
+        (
+            ControllerHat {
+                id: 0,
+                which: 0,
+                state: HatState::LeftUp,
+            },
+            InputRole::Up,
+        ),
+        (
+            ControllerHat {
+                id: 0,
+                which: 0,
+                state: HatState::LeftDown,
+            },
+            InputRole::Left,
+        ),
+        (
+            ControllerHat {
+                id: 0,
+                which: 0,
+                state: HatState::LeftDown,
+            },
+            InputRole::Down,
+        ),
+    ]);
+
     let mut input_role_state = InputRoleState::default();
 
     let mut bg_texture_bank = BgTextureBank::new(
@@ -210,7 +204,6 @@ fn main() {
             VM_RECT_PIXEL_SIZE,
             rc_bg_texture_bank.clone(),
         );
-
         let bg1 = BgPlane::new(
             BG1_RECT_SIZE,
             VM_RECT_PIXEL_SIZE,
@@ -234,8 +227,9 @@ fn main() {
             buf.push(line.to_string());
         }
         buf.push(
-            "[eof]------------------------------------------------------------------".to_string(),
+            "[eof]------------------------------------------------------------------".to_string()
         );
+        buf.push(String::new());
         buf
     };
 
@@ -249,6 +243,8 @@ fn main() {
 
     let (mut my_x256, mut my_y256) = (160 * 256, 320 * 256);
     let mut my_tilt = 0;
+    let mut my_tilt_force: i32;
+    //let mut my_tilt_neutral: bool;
     let (mut v_x, mut v_y) = (0, 0);
 
     let mut shots: Vec<Option<((i32, i32), (i32, i32), SpCode)>> = Vec::with_capacity(16);
@@ -296,10 +292,7 @@ fn main() {
             .set_cur_pos(4, 0)
             .put_string(&format!("{:3}[{:3}]", shots.len(), unused.len()), None);
 
-        match (
-            input_role_state.get(InputRole::Up).0,
-            input_role_state.get(InputRole::Down).0,
-        ) {
+        match (input_role_state.get(InputRole::Up).0, input_role_state.get(InputRole::Down).0) {
             (true, false) => {
                 if v_y > 0 {
                     v_y = 0;
@@ -322,10 +315,7 @@ fn main() {
             }
             _ => {}
         }
-        match (
-            input_role_state.get(InputRole::Left).0,
-            input_role_state.get(InputRole::Right).0,
-        ) {
+        match (input_role_state.get(InputRole::Left).0, input_role_state.get(InputRole::Right).0) {
             (true, false) => {
                 if v_x > 0 {
                     v_x = 0;
@@ -335,10 +325,8 @@ fn main() {
                         v_x = -768;
                     }
                 }
-                my_tilt -= 2;
-                if my_tilt < -34 {
-                    my_tilt = -34;
-                }
+                my_tilt_force = -32;
+                //my_tilt_neutral = false;
             }
             (false, true) => {
                 if v_x < 0 {
@@ -349,12 +337,19 @@ fn main() {
                         v_x = 768;
                     }
                 }
-                my_tilt += 2;
-                if my_tilt > 34 {
-                    my_tilt = 34;
-                }
+                my_tilt_force = 32;
+                //my_tilt_neutral = false;
             }
-            _ => {}
+            _ => {
+                my_tilt_force = if my_tilt == 0 {
+                    0
+                } else if my_tilt > 0 {
+                    -24
+                } else {
+                    24
+                };
+                //my_tilt_neutral = true;
+            }
         }
 
         if v_x != 0 {
@@ -378,11 +373,15 @@ fn main() {
         if my_y256 > 412 * 256 {
             my_y256 = 412 * 256;
         }
-        if my_tilt != 0 {
-            my_tilt += if my_tilt < 0 { 1 } else { -1 };
+        my_tilt += my_tilt_force;
+        if my_tilt < -(34 * 16) {
+            my_tilt = -(34 * 16);
+        }
+        if my_tilt > 34 * 16 {
+            my_tilt = 34 * 16;
         }
         {
-            let (my_code, drift, l_offset, r_offset) = match my_tilt {
+            let (my_code, drift, l_offset, r_offset) = match my_tilt / 16 {
                 -40..=-29 => (0, -1, 23, 36),
                 -28..=-22 => (1, -1, 23, 36),
                 -21..=-15 => (2, -1, 22, 36),
