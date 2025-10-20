@@ -31,4 +31,13 @@ impl Direction {
             Self::Left => Self::Down,
         }
     }
+
+    pub fn reverse(&self) -> Self {
+        match self {
+            Self::Up => Self::Down,
+            Self::Right => Self::Left,
+            Self::Down => Self::Up,
+            Self::Left => Self::Right,
+        }
+    }
 }
